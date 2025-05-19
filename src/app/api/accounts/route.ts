@@ -1,67 +1,50 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import type { Account } from '@/types/account';
+import * as admin from 'firebase-admin';
 
-const mockAccounts: Account[] = [
-  {
-    id: '1',
-    accountName: 'Personal Savings',
-    accountNumber: '**** **** **** 1234',
-    balance: 10500.75,
-    currency: 'USD',
-    accountType: 'Savings',
-  },
-  {
-    id: '2',
-    accountName: 'Main Checking Account',
-    accountNumber: '**** **** **** 5678',
-    balance: 2345.22,
-    currency: 'USD',
-    accountType: 'Checking',
-  },
-  {
-    id: '3',
-    accountName: 'Travel Rewards Card',
-    accountNumber: '**** **** **** 9012',
-    balance: -750.00,
-    currency: 'USD',
-    accountType: 'Credit Card',
-  },
-  {
-    id: '4',
-    accountName: 'Retirement Fund',
-    accountNumber: '**** **** **** 3456',
-    balance: 150200.00,
-    currency: 'USD',
-    accountType: 'Investment',
-  },
-  {
-    id: '5',
-    accountName: 'Emergency Fund',
-    accountNumber: '**** **** **** 7890',
-    balance: 25000.00,
-    currency: 'USD',
-    accountType: 'Savings',
-  },
-  {
-    id: '6',
-    accountName: 'Euro Trip Account',
-    accountNumber: '**** **** **** 1121',
-    balance: 850.50,
-    currency: 'EUR',
-    accountType: 'Checking',
-  }
-];
+// Initialize Firebase Admin SDK
+// This needs to be done once, typically at the application start.
+// In a Next.js API route (serverless environment), initializing here is common.
+// Ensure GOOGLE_APPLICATION_CREDENTIALS environment variable is set for local development,
+// pointing to your service account key file. In Firebase deployed environments (e.g., Cloud Functions),
+// initialization is often automatic or requires minimal configuration.
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+const db = admin.firestore();
 
 export async function GET(request: NextRequest) {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  try {
+    const accountsCollection = db.collection('accounts');
+    const accountsSnapshot = await accountsCollection.get();
 
-  // Uncomment to simulate potential error
-  // if (Math.random() > 0.8) {
-  //   console.error("Simulated server error fetching accounts");
-  //   return NextResponse.json({ error: 'Failed to fetch accounts from the server.' }, { status: 500 });
-  // }
+    if (accountsSnapshot.empty) {
+      return NextResponse.json([], { status: 200 });
+    }
 
-  return NextResponse.json(mockAccounts);
+    const accounts: Account[] = accountsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      // Ensure data conforms to the Account type, add validation if necessary
+      return {
+        id: doc.id,
+        accountName: data.accountName || 'N/A',
+        accountNumber: data.accountNumber || '**** **** **** 0000',
+        balance: typeof data.balance === 'number' ? data.balance : 0,
+        currency: data.currency || 'USD',
+        accountType: data.accountType || 'Checking', // Provide a default or ensure data consistency
+      } as Account;
+    });
+
+    return NextResponse.json(accounts);
+  } catch (error: any) {
+    console.error('Error fetching accounts from Firestore:', error);
+    // The PRD mentions "console.firebase.google.com" for error source,
+    // which likely means "Firebase backend services" like Firestore.
+    return NextResponse.json(
+      { error: `Failed to fetch accounts from Firebase services: ${error.message}` },
+      { status: 500 }
+    );
+  }
 }
