@@ -4,26 +4,7 @@ import { NextResponse } from 'next/server';
 import type { Account } from '@/types/account';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp();
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-    // Fallback for environments where GOOGLE_APPLICATION_CREDENTIALS might not be set,
-    // though this is primarily for deployed environments.
-    // For local dev, ensure GOOGLE_APPLICATION_CREDENTIALS is set.
-    if (process.env.FIREBASE_CONFIG) {
-        admin.initializeApp({
-            credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_CONFIG))
-        });
-    } else if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && process.env.NODE_ENV !== 'production') {
-        console.warn("GOOGLE_APPLICATION_CREDENTIALS not set. Firestore calls will likely fail if not in a Firebase environment.");
-    }
-  }
-}
-
-const db = admin.firestore();
+// Moved Firebase Admin SDK initialization logic inside the try block for Firestore access
 
 const mockAccounts: Account[] = [
   { id: 'mock-1', accountName: 'Mock Savings', accountNumber: '**** **** **** 1111', balance: 1500.75, currency: 'USD', accountType: 'Savings' },
@@ -40,6 +21,32 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Initialize Firebase Admin SDK only if not using mock data
+    if (!admin.apps.length) {
+      try {
+        // Attempt to initialize with default credentials (e.g., GOOGLE_APPLICATION_CREDENTIALS)
+        admin.initializeApp();
+      } catch (error) {
+        console.error('Firebase admin default initialization error', error);
+        // Fallback for environments where GOOGLE_APPLICATION_CREDENTIALS might not be set,
+        // but FIREBASE_CONFIG (e.g., from Firebase Hosting/Functions) is.
+        if (process.env.FIREBASE_CONFIG) {
+            admin.initializeApp({
+                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_CONFIG))
+            });
+        } else if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && process.env.NODE_ENV !== 'production') {
+            // This warning is more relevant if we are *trying* to use Firestore
+            console.warn("GOOGLE_APPLICATION_CREDENTIALS not set, and no FIREBASE_CONFIG found. Firestore calls will likely fail if not in a Firebase-hosted environment.");
+            // If initialization fails and we're not in mock mode, it's a genuine issue for Firestore access.
+            throw new Error("Firebase Admin SDK initialization failed.");
+        } else {
+          // If initialization fails for other reasons, re-throw.
+          throw error;
+        }
+      }
+    }
+
+    const db = admin.firestore();
     const accountsCollection = db.collection('accounts');
     const accountsSnapshot = await accountsCollection.get();
 
@@ -61,9 +68,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(accounts);
   } catch (error: any) {
-    console.error('Error fetching accounts from Firestore:', error);
+    console.error('Error processing request for accounts:', error);
+    // Ensure a more generic error message if it's an initialization problem vs. data fetching
+    const errorMessage = error.message.includes("Firebase Admin SDK initialization failed")
+        ? "Server configuration error for Firebase."
+        : `Failed to fetch accounts: ${error.message}`;
+
     return NextResponse.json(
-      { error: `Failed to fetch accounts from Firebase services: ${error.message}` },
+      { error: errorMessage },
       { status: 500 }
     );
   }
