@@ -3,6 +3,14 @@ import type { Account, Security } from '@/types/account';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 
 interface AccountCardProps {
   account: Account;
@@ -21,24 +29,36 @@ export function AccountCard({ account, className, style }: AccountCardProps) {
       {account.securities && account.securities.length > 0 && (
         <CardContent className="pt-2 pb-4 flex-grow">
           <CardDescription className="mb-2 text-sm font-medium text-center">Securities</CardDescription>
-          <ScrollArea className="h-[150px] rounded-md border p-2">
-            <ul className="space-y-2">
-              {account.securities.map((security: Security, index: number) => {
-                const unitcostValue = typeof security.unitcost === 'number' ? security.unitcost : 0;
-                const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
-                const symbol = security.symbol || 'N/A';
-                const description = security.description || 'No description';
+          <ScrollArea className="h-[200px] rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="h-10 px-3 text-xs">Symbol</TableHead>
+                  <TableHead className="h-10 px-3 text-xs">Description</TableHead>
+                  <TableHead className="h-10 px-3 text-xs text-right">Qty</TableHead>
+                  <TableHead className="h-10 px-3 text-xs text-right">Unit Cost</TableHead>
+                  <TableHead className="h-10 px-3 text-xs text-right">Total Cost</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {account.securities.map((security: Security, index: number) => {
+                  const unitcostValue = typeof security.unitcost === 'number' ? security.unitcost : 0;
+                  const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
+                  const symbol = security.symbol || 'N/A';
+                  const description = security.description || 'No description';
 
-                return (
-                  <li key={index} className="text-xs p-2 bg-muted/50 rounded-md shadow-sm">
-                    <div className="font-semibold">{symbol} - {description}</div>
-                    <div>Quantity: {quantity}</div>
-                    <div>Unit Cost: ${unitcostValue.toFixed(2)}</div>
-                    <div>Total Cost: ${(quantity * unitcostValue).toFixed(2)}</div>
-                  </li>
-                );
-              })}
-            </ul>
+                  return (
+                    <TableRow key={index}>
+                      <TableCell className="px-3 py-2 text-xs font-medium">{symbol}</TableCell>
+                      <TableCell className="px-3 py-2 text-xs">{description}</TableCell>
+                      <TableCell className="px-3 py-2 text-xs text-right">{quantity}</TableCell>
+                      <TableCell className="px-3 py-2 text-xs text-right">${unitcostValue.toFixed(2)}</TableCell>
+                      <TableCell className="px-3 py-2 text-xs text-right">${(quantity * unitcostValue).toFixed(2)}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </ScrollArea>
         </CardContent>
       )}
