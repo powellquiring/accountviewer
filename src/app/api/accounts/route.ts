@@ -2,8 +2,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import type { Account } from '@/types/account';
-import * as admin from 'firebase-admin';
-
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 // Moved Firebase Admin SDK initialization logic inside the try block for Firestore access
 
 const mockAccounts: Account[] = [
@@ -21,34 +21,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Initialize Firebase Admin SDK only if not using mock data
-    if (!admin.apps.length) {
-      try {
-        // Attempt to initialize with default credentials (e.g., GOOGLE_APPLICATION_CREDENTIALS)
-        admin.initializeApp();
-      } catch (error) {
-        console.error('Firebase admin default initialization error', error);
-        // Fallback for environments where GOOGLE_APPLICATION_CREDENTIALS might not be set,
-        // but FIREBASE_CONFIG (e.g., from Firebase Hosting/Functions) is.
-        if (process.env.FIREBASE_CONFIG) {
-            admin.initializeApp({
-                credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_CONFIG))
-            });
-        } else if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && process.env.NODE_ENV !== 'production') {
-            // This warning is more relevant if we are *trying* to use Firestore
-            console.warn("GOOGLE_APPLICATION_CREDENTIALS not set, and no FIREBASE_CONFIG found. Firestore calls will likely fail if not in a Firebase-hosted environment.");
-            // If initialization fails and we're not in mock mode, it's a genuine issue for Firestore access.
-            throw new Error("Firebase Admin SDK initialization failed.");
-        } else {
-          // If initialization fails for other reasons, re-throw.
-          throw error;
-        }
-      }
-    }
-
-    const db = admin.firestore();
-    const accountsCollection = db.collection('accounts');
-    const accountsSnapshot = await accountsCollection.get();
+    // Initialize Firebase Client SDK
+    const firebaseConfig = {
+      apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
+      authDomain: "accountviewer.firebaseapp.com",
+      projectId: "accountviewer",
+      storageBucket: "accountviewer.firebasestorage.app",
+      messagingSenderId: "693621188843",
+      appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
+    };
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    const db = getFirestore(app);
+    const accountsCollection = collection(db, 'accounts');
+    const accountsSnapshot = await getDocs(accountsCollection);
 
     if (accountsSnapshot.empty) {
       return NextResponse.json([], { status: 200 });
@@ -70,8 +55,8 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Error processing request for accounts:', error);
     // Ensure a more generic error message if it's an initialization problem vs. data fetching
-    const errorMessage = error.message.includes("Firebase Admin SDK initialization failed")
-        ? "Server configuration error for Firebase."
+    const errorMessage = error.message.includes("Firebase Client SDK initialization failed")
+        ? "Client configuration error for Firebase."
         : `Failed to fetch accounts: ${error.message}`;
 
     return NextResponse.json(
