@@ -3,7 +3,7 @@ export interface Security {
   description: string;
   quantity: number;
   symbol: string;
-  unitCost: number;
+  unitcost: number; // Changed from unitCost to unitcost
 }
 
 export interface Account {

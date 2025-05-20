@@ -26,18 +26,19 @@ export default function HomePage() {
     try {
       if (dataSource === 'mock') {
         const mockSecurities: Security[] = [
-          { description: 'Alphabet Inc.', quantity: 15, symbol: 'GOOGL', unitCost: 2500.00 },
-          { description: 'Amazon.com Inc.', quantity: 3, symbol: 'AMZN', unitCost: 3200.75 },
+          { description: 'Alphabet Inc.', quantity: 15, symbol: 'GOOGL', unitcost: 2500.00 }, // Changed unitCost to unitcost
+          { description: 'Amazon.com Inc.', quantity: 3, symbol: 'AMZN', unitcost: 3200.75 }, // Changed unitCost to unitcost
         ];
         const mockAccountsData: Account[] = [
           { id: 'mock-page-1', name: 'Mock Brokerage Account', securities: mockSecurities },
           { id: 'mock-page-2', name: 'Mock Savings Account' }, // No securities
-          { id: 'mock-page-3', name: 'Mock Investment Portfolio', securities: [{ description: 'Netflix Inc.', quantity: 7, symbol: 'NFLX', unitCost: 550.20 }] },
+          { id: 'mock-page-3', name: 'Mock Investment Portfolio', securities: [{ description: 'Netflix Inc.', quantity: 7, symbol: 'NFLX', unitcost: 550.20 }] }, // Changed unitCost to unitcost
           { id: 'mock-page-4', name: 'Mock College Fund' },
         ];
         setAllAccounts(mockAccountsData);
       } else {
         // Initialize Firebase Client SDK
+        // IMPORTANT: Replace with your actual Firebase config
         const firebaseConfig = {
           apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
           authDomain: "accountviewer.firebaseapp.com",
@@ -59,10 +60,11 @@ export default function HomePage() {
 
         const accountsData = accountsSnapshot.docs.map(doc => {
           const data = doc.data();
+          // Firestore data is assumed to have 'unitcost' if 'securities' array exists
           return {
             id: doc.id,
             name: data.name || 'N/A',
-            securities: data.securities || [], // Ensure securities are mapped
+            securities: data.securities || [], 
           };
         });
         
