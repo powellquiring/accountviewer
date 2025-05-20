@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Account } from '@/types/account';
+import type { Account, Security } from '@/types/account';
 import { useEffect, useState, useCallback } from 'react';
 import { AccountCard } from '@/components/account-card';
 import { LoadingSpinner } from '@/components/loading-spinner';
@@ -25,12 +25,15 @@ export default function HomePage() {
     
     try {
       if (dataSource === 'mock') {
-        // Use mock data directly
+        const mockSecurities: Security[] = [
+          { description: 'Alphabet Inc.', quantity: 15, symbol: 'GOOGL', unitCost: 2500.00 },
+          { description: 'Amazon.com Inc.', quantity: 3, symbol: 'AMZN', unitCost: 3200.75 },
+        ];
         const mockAccountsData: Account[] = [
-          { id: 'mock-1', name: 'Mock Savings Account' },
-          { id: 'mock-2', name: 'Mock Checking Account' },
-          { id: 'mock-3', name: 'Mock Credit Card Account' },
-          { id: 'mock-4', name: 'Mock Investment Account' },
+          { id: 'mock-page-1', name: 'Mock Brokerage Account', securities: mockSecurities },
+          { id: 'mock-page-2', name: 'Mock Savings Account' }, // No securities
+          { id: 'mock-page-3', name: 'Mock Investment Portfolio', securities: [{ description: 'Netflix Inc.', quantity: 7, symbol: 'NFLX', unitCost: 550.20 }] },
+          { id: 'mock-page-4', name: 'Mock College Fund' },
         ];
         setAllAccounts(mockAccountsData);
       } else {
@@ -46,8 +49,8 @@ export default function HomePage() {
         
         const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
         const db = getFirestore(app);
-        const accountsCollection = collection(db, 'accounts');
-        const accountsSnapshot = await getDocs(accountsCollection);
+        const accountsCollectionRef = collection(db, 'accounts');
+        const accountsSnapshot = await getDocs(accountsCollectionRef);
 
         if (accountsSnapshot.empty) {
           setAllAccounts([]);
@@ -58,7 +61,8 @@ export default function HomePage() {
           const data = doc.data();
           return {
             id: doc.id,
-            name: data.name || 'N/A', // Assuming 'name' is the field in Firestore
+            name: data.name || 'N/A',
+            securities: data.securities || [], // Ensure securities are mapped
           };
         });
         
@@ -135,7 +139,7 @@ export default function HomePage() {
         </div>
       )}
        {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length < allAccounts.length && (
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex justify-center items-center">
           <LoadingSpinner size={24} />
           <p className="ml-2 text-muted-foreground">Loading more accounts...</p>
         </div>
