@@ -7,6 +7,8 @@ import { AccountCard } from '@/components/account-card';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { ErrorMessage } from '@/components/error-message';
 import { Button } from '@/components/ui/button';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { initializeApp, getApps } from 'firebase/app';
 
 export default function HomePage() {
   const [allAccounts, setAllAccounts] = useState<Account[]>([]);
@@ -18,27 +20,65 @@ export default function HomePage() {
   const fetchAccounts = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    setRenderedAccounts([]); // Reset rendered accounts on new fetch
-    setAllAccounts([]); // Also reset all accounts
+    setRenderedAccounts([]);
+    setAllAccounts([]);
+    
     try {
-      const response = await fetch(`/api/accounts?source=${dataSource}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      if (dataSource === 'mock') {
+        // Use mock data directly
+        const mockAccounts = [
+          { id: 'mock-1', accountName: 'Mock Savings', accountNumber: '**** **** **** 1111', balance: 1500.75, currency: 'USD', accountType: 'Savings' },
+          { id: 'mock-2', accountName: 'Mock Checking', accountNumber: '**** **** **** 2222', balance: 320.50, currency: 'USD', accountType: 'Checking' },
+          { id: 'mock-3', accountName: 'Mock Credit Card', accountNumber: '**** **** **** 3333', balance: -500.00, currency: 'EUR', accountType: 'Credit Card' },
+          { id: 'mock-4', accountName: 'Mock Investment', accountNumber: '**** **** **** 4444', balance: 12500.00, currency: 'USD', accountType: 'Investment' },
+        ];
+        setAllAccounts(mockAccounts);
+      } else {
+        // Initialize Firebase Client SDK
+        const firebaseConfig = {
+          apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
+          authDomain: "accountviewer.firebaseapp.com",
+          projectId: "accountviewer",
+          storageBucket: "accountviewer.firebasestorage.app",
+          messagingSenderId: "693621188843",
+          appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
+        };
+        
+        const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+        const db = getFirestore(app);
+        const accountsCollection = collection(db, 'accounts');
+        const accountsSnapshot = await getDocs(accountsCollection);
+
+        if (accountsSnapshot.empty) {
+          setAllAccounts([]);
+          return;
+        }
+
+        const accounts = accountsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            accountName: data.name || 'N/A',
+            accountNumber: data.accountNumber || '**** **** **** 0000',
+            balance: typeof data.balance === 'number' ? data.balance : 0,
+            currency: data.currency || 'USD',
+            accountType: data.accountType || 'Checking',
+          };
+        });
+        
+        setAllAccounts(accounts);
       }
-      const data: Account[] = await response.json();
-      setAllAccounts(data);
     } catch (e: any) {
       console.error("Failed to fetch accounts:", e);
       setError(e.message || 'Could not load accounts. Please try again later.');
     } finally {
       setIsLoading(false);
     }
-  }, [dataSource]); // Add dataSource as a dependency
+  }, [dataSource]);
 
   useEffect(() => {
     fetchAccounts();
-  }, [fetchAccounts]); // fetchAccounts is now memoized and includes dataSource
+  }, [fetchAccounts]);
 
   useEffect(() => {
     if (allAccounts.length > 0 && renderedAccounts.length < allAccounts.length) {
