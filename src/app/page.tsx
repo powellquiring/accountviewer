@@ -26,13 +26,13 @@ export default function HomePage() {
     try {
       if (dataSource === 'mock') {
         // Use mock data directly
-        const mockAccounts = [
-          { id: 'mock-1', accountName: 'Mock Savings', accountNumber: '**** **** **** 1111', balance: 1500.75, currency: 'USD', accountType: 'Savings' },
-          { id: 'mock-2', accountName: 'Mock Checking', accountNumber: '**** **** **** 2222', balance: 320.50, currency: 'USD', accountType: 'Checking' },
-          { id: 'mock-3', accountName: 'Mock Credit Card', accountNumber: '**** **** **** 3333', balance: -500.00, currency: 'EUR', accountType: 'Credit Card' },
-          { id: 'mock-4', accountName: 'Mock Investment', accountNumber: '**** **** **** 4444', balance: 12500.00, currency: 'USD', accountType: 'Investment' },
+        const mockAccountsData: Account[] = [
+          { id: 'mock-1', name: 'Mock Savings Account' },
+          { id: 'mock-2', name: 'Mock Checking Account' },
+          { id: 'mock-3', name: 'Mock Credit Card Account' },
+          { id: 'mock-4', name: 'Mock Investment Account' },
         ];
-        setAllAccounts(mockAccounts);
+        setAllAccounts(mockAccountsData);
       } else {
         // Initialize Firebase Client SDK
         const firebaseConfig = {
@@ -54,19 +54,15 @@ export default function HomePage() {
           return;
         }
 
-        const accounts = accountsSnapshot.docs.map(doc => {
+        const accountsData = accountsSnapshot.docs.map(doc => {
           const data = doc.data();
           return {
             id: doc.id,
-            accountName: data.name || 'N/A',
-            accountNumber: data.accountNumber || '**** **** **** 0000',
-            balance: typeof data.balance === 'number' ? data.balance : 0,
-            currency: data.currency || 'USD',
-            accountType: data.accountType || 'Checking',
+            name: data.name || 'N/A', // Assuming 'name' is the field in Firestore
           };
         });
         
-        setAllAccounts(accounts);
+        setAllAccounts(accountsData);
       }
     } catch (e: any) {
       console.error("Failed to fetch accounts:", e);
