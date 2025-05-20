@@ -29,7 +29,7 @@ export function AccountCard({ account, className, style }: AccountCardProps) {
       {account.securities && account.securities.length > 0 && (
         <CardContent className="pt-2 pb-4 flex-grow">
           <CardDescription className="mb-2 text-sm font-medium text-center">Securities</CardDescription>
-          <ScrollArea className="h-[200px] rounded-md border">
+          <ScrollArea className="rounded-md border"> {/* Removed h-[200px] */}
             <Table>
               <TableHeader>
                 <TableRow>
