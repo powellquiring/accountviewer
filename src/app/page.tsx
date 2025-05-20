@@ -26,13 +26,13 @@ export default function HomePage() {
     try {
       if (dataSource === 'mock') {
         const mockSecurities: Security[] = [
-          { description: 'Alphabet Inc.', quantity: 15, symbol: 'GOOGL', unitcost: 2500.00 }, // Changed unitCost to unitcost
-          { description: 'Amazon.com Inc.', quantity: 3, symbol: 'AMZN', unitcost: 3200.75 }, // Changed unitCost to unitcost
+          { description: 'Alphabet Inc.', quantity: 15, symbol: 'GOOGL', unitcost: 2500.00 },
+          { description: 'Amazon.com Inc.', quantity: 3, symbol: 'AMZN', unitcost: 3200.75 },
         ];
         const mockAccountsData: Account[] = [
           { id: 'mock-page-1', name: 'Mock Brokerage Account', securities: mockSecurities },
           { id: 'mock-page-2', name: 'Mock Savings Account' }, // No securities
-          { id: 'mock-page-3', name: 'Mock Investment Portfolio', securities: [{ description: 'Netflix Inc.', quantity: 7, symbol: 'NFLX', unitcost: 550.20 }] }, // Changed unitCost to unitcost
+          { id: 'mock-page-3', name: 'Mock Investment Portfolio', securities: [{ description: 'Netflix Inc.', quantity: 7, symbol: 'NFLX', unitcost: 550.20 }] },
           { id: 'mock-page-4', name: 'Mock College Fund' },
         ];
         setAllAccounts(mockAccountsData);
@@ -129,7 +129,7 @@ export default function HomePage() {
       )}
 
       {!isLoading && !error && renderedAccounts.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {renderedAccounts.map((account, index) => (
             <AccountCard
               key={account.id}
