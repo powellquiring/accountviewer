@@ -9,13 +9,58 @@ import { ErrorMessage } from '@/components/error-message';
 import { Button } from '@/components/ui/button';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
+import { getAuth, onAuthStateChanged, User, signInWithEmailAndPassword, signOut, signInAnonymously } from 'firebase/auth';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function HomePage() {
+  // State declarations
   const [allAccounts, setAllAccounts] = useState<Account[]>([]);
   const [renderedAccounts, setRenderedAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'firestore' | 'mock'>('firestore');
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  // Set isMounted to true when component mounts
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Firebase initialization and auth state monitoring
+  useEffect(() => {
+    try {
+      const firebaseConfig = {
+        apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
+        authDomain: "accountviewer.firebaseapp.com",
+        projectId: "accountviewer",
+        storageBucket: "accountviewer.firebasestorage.app",
+        messagingSenderId: "693621188843",
+        appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
+      };
+      
+      const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+      const auth = getAuth(app);
+      
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        setAuthLoading(false);
+      });
+      
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Firebase auth initialization error:", error);
+      setAuthLoading(false);
+    }
+  }, []);
 
   const fetchAccounts = useCallback(async () => {
     setIsLoading(true);
@@ -95,6 +140,39 @@ export default function HomePage() {
     setDataSource(prev => prev === 'firestore' ? 'mock' : 'firestore');
   };
 
+  const handleLogin = async () => {
+    setLoginError(null);
+    try {
+      // Get the existing Firebase app instance
+      const app = getApps().length === 0 ? initializeApp({
+        apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
+        authDomain: "accountviewer.firebaseapp.com",
+        projectId: "accountviewer",
+        storageBucket: "accountviewer.firebasestorage.app",
+        messagingSenderId: "693621188843",
+        appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
+      }) : getApps()[0];
+      
+      const auth = getAuth(app);
+      await signInWithEmailAndPassword(auth, email, password);
+      // await signInAnonymously(auth);
+      setIsLoginOpen(false);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setLoginError(error.message || "Failed to login");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const app = getApps()[0];
+      const auth = getAuth(app);
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   return (
     <main className="min-h-screen container mx-auto px-4 py-8">
       <header className="mb-8 text-center">
@@ -102,6 +180,76 @@ export default function HomePage() {
         <p className="mt-2 text-lg text-muted-foreground">
           Your accounts, displayed progressively.
         </p>
+        {isMounted && (
+          <div className="mt-4">
+            {authLoading ? (
+              <Badge variant="outline" className="animate-pulse">
+                Checking auth...
+              </Badge>
+            ) : user ? (
+              <div className="flex flex-col items-center gap-2">
+                <Badge variant="default" className="bg-green-600">
+                  Signed in as {user.email || user.displayName || 'User'}
+                </Badge>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Badge variant="secondary">
+                  Not signed in
+                </Badge>
+                <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="default" size="sm">
+                      Sign In
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Sign in to AccountViewer</DialogTitle>
+                      <DialogDescription>
+                        Enter your credentials to access your account information.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                      <div className="grid gap-4 py-4">
+                        {loginError && (
+                          <div className="text-sm text-destructive">{loginError}</div>
+                        )}
+                        <div className="grid gap-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="your@email.com"
+                            autoComplete="username"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            autoComplete="current-password"
+                          />
+                        </div>
+                        <Button type="submit" className="mt-2">
+                          Sign In
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="mb-6 flex justify-center">
