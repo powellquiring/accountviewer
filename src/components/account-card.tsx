@@ -16,9 +16,10 @@ interface AccountCardProps {
   account: Account;
   className?: string;
   style?: React.CSSProperties;
+  marketPrices?: Record<string, number>;
 }
 
-export function AccountCard({ account, className, style }: AccountCardProps) {
+export function AccountCard({ account, className, style, marketPrices = {} }: AccountCardProps) {
   return (
     <Card className={cn("shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col", className)} style={style}>
       <CardHeader className="pb-3 pt-4">
@@ -38,6 +39,8 @@ export function AccountCard({ account, className, style }: AccountCardProps) {
                   <TableHead className="h-10 px-3 text-xs text-right">Qty</TableHead>
                   <TableHead className="h-10 px-3 text-xs text-right">Unit Cost</TableHead>
                   <TableHead className="h-10 px-3 text-xs text-right">Total Cost</TableHead>
+                  <TableHead className="h-10 px-3 text-xs text-right">Price</TableHead>
+                  <TableHead className="h-10 px-3 text-xs text-right">Value</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -46,6 +49,8 @@ export function AccountCard({ account, className, style }: AccountCardProps) {
                   const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
                   const symbol = security.symbol || 'N/A';
                   const description = security.description || 'No description';
+                  const currentPrice = marketPrices[symbol] || 0;
+                  const currentValue = quantity * currentPrice;
 
                   return (
                     <TableRow key={index}>
@@ -54,6 +59,8 @@ export function AccountCard({ account, className, style }: AccountCardProps) {
                       <TableCell className="px-3 py-2 text-xs text-right">{quantity}</TableCell>
                       <TableCell className="px-3 py-2 text-xs text-right">${unitcostValue.toFixed(2)}</TableCell>
                       <TableCell className="px-3 py-2 text-xs text-right">${(quantity * unitcostValue).toFixed(2)}</TableCell>
+                      <TableCell className="px-3 py-2 text-xs text-right">${currentPrice.toFixed(2)}</TableCell>
+                      <TableCell className="px-3 py-2 text-xs text-right">${currentValue.toFixed(2)}</TableCell>
                     </TableRow>
                   );
                 })}

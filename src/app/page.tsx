@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
 export default function HomePage() {
   // State declarations
@@ -34,6 +35,9 @@ export default function HomePage() {
   const [isJsonDialogOpen, setIsJsonDialogOpen] = useState<boolean>(false);
   const [userJson, setUserJson] = useState<string>('');
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
+  const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const firebaseConfig = {
@@ -45,7 +49,6 @@ export default function HomePage() {
     appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
   };
       
-
   // Set isMounted to true when component mounts
   useEffect(() => {
     setIsMounted(true);
@@ -209,6 +212,81 @@ export default function HomePage() {
     }
   };
 
+  const getCombinedSecurities = useCallback((): Security[] => {
+    if (!allAccounts.length) return [];
+    
+    const securitiesMap = new Map<string, Security>();
+    
+    allAccounts.forEach(account => {
+      if (!account.securities) return;
+      
+      account.securities.forEach(security => {
+        const existing = securitiesMap.get(security.symbol);
+        
+        if (existing) {
+          // Calculate weighted average cost and sum quantities
+          const totalQuantity = existing.quantity + security.quantity;
+          const totalCost = (existing.quantity * existing.unitcost) + (security.quantity * security.unitcost);
+          
+          securitiesMap.set(security.symbol, {
+            symbol: security.symbol,
+            description: security.description,
+            quantity: totalQuantity,
+            unitcost: totalCost / totalQuantity
+          });
+        } else {
+          securitiesMap.set(security.symbol, {...security});
+        }
+      });
+    });
+    
+    return Array.from(securitiesMap.values());
+  }, [allAccounts]);
+
+  const fetchMarketPrices = async () => {
+    const securities = getCombinedSecurities();
+    if (!securities.length) return;
+    
+    setIsLoadingPrices(true);
+    setPriceError(null);
+    
+    try {
+      const symbols = securities.map(security => security.symbol);
+      
+      // Initialize Firebase functions
+      const app = getApps()[0];
+      const functions = getFunctions(app);
+      // testing:
+      // connectFunctionsEmulator(functions, "localhost", 5001);
+      
+      // Call the getMarketValues function using httpsCallable
+      const getMarketValuesFunction = httpsCallable(functions, 'getMarketValues');
+      const result = await getMarketValuesFunction({ symbols: symbols });
+      
+      // Process the response to create a symbol -> price mapping
+      const data = result.data as any;
+      const prices: Record<string, number> = {};
+      
+      if (data && data.length > 0 && data[0].values) {
+        data[0].values.forEach((item: {symbol: string, price: number}) => {
+          prices[item.symbol] = item.price;
+        });
+      }
+      
+      setMarketPrices(prices);
+      
+      toast({
+        title: "Prices Updated",
+        description: "Market prices have been refreshed",
+      });
+    } catch (error: any) {
+      console.error("Failed to fetch market prices:", error);
+      setPriceError(error.message || "Could not load market prices");
+    } finally {
+      setIsLoadingPrices(false);
+    }
+  };
+
   return (
     <main className="min-h-screen container mx-auto px-4 py-8">
       <header className="mb-8 text-center">
@@ -323,13 +401,51 @@ export default function HomePage() {
             <AccountCard
               key={account.id}
               account={account}
+              marketPrices={marketPrices}
               className="animate-in fade-in slide-in-from-bottom-5 duration-500 ease-out"
               style={{ animationDelay: `${index * 50}ms` }}
             />
           ))}
         </div>
       )}
-       {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length < allAccounts.length && (
+      {!isLoading && !error && renderedAccounts.length > 0 && (
+        <div className="mt-8 mb-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">Combined Holdings</h2>
+            <Button 
+              onClick={fetchMarketPrices} 
+              disabled={isLoadingPrices}
+              variant="outline"
+              size="sm"
+            >
+              {isLoadingPrices ? (
+                <>
+                  <LoadingSpinner size={16} className="mr-2" />
+                  Updating Prices...
+                </>
+              ) : (
+                "Get Market Prices"
+              )}
+            </Button>
+          </div>
+          {priceError && (
+            <div className="mb-4">
+              <ErrorMessage message={priceError} />
+            </div>
+          )}
+          <AccountCard
+            key="combined-holdings"
+            account={{
+              id: "combined-holdings",
+              name: "Combined",
+              securities: getCombinedSecurities()
+            }}
+            marketPrices={marketPrices}
+            className="animate-in fade-in slide-in-from-bottom-5 duration-500"
+          />
+        </div>
+      )}
+      {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length < allAccounts.length && (
         <div className="mt-8 flex justify-center items-center">
           <LoadingSpinner size={24} />
           <p className="ml-2 text-muted-foreground">Loading more accounts...</p>
