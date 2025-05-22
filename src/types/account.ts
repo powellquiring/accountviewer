@@ -11,3 +11,9 @@ export interface Account {
   name: string;
   securities?: Security[]; // Optional, as an account might not have securities
 }
+
+export interface User {
+  id: string;
+  hairColor: string;
+  accounts: Account[];
+}

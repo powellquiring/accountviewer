@@ -7,13 +7,15 @@ import { AccountCard } from '@/components/account-card';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { ErrorMessage } from '@/components/error-message';
 import { Button } from '@/components/ui/button';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, onAuthStateChanged, User, signInWithEmailAndPassword, signOut, signInAnonymously } from 'firebase/auth';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 export default function HomePage() {
   // State declarations
@@ -29,6 +31,20 @@ export default function HomePage() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [isJsonDialogOpen, setIsJsonDialogOpen] = useState<boolean>(false);
+  const [userJson, setUserJson] = useState<string>('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
+    authDomain: "accountviewer.firebaseapp.com",
+    projectId: "accountviewer",
+    storageBucket: "accountviewer.firebasestorage.app",
+    messagingSenderId: "693621188843",
+    appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
+  };
+      
 
   // Set isMounted to true when component mounts
   useEffect(() => {
@@ -38,15 +54,6 @@ export default function HomePage() {
   // Firebase initialization and auth state monitoring
   useEffect(() => {
     try {
-      const firebaseConfig = {
-        apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
-        authDomain: "accountviewer.firebaseapp.com",
-        projectId: "accountviewer",
-        storageBucket: "accountviewer.firebasestorage.app",
-        messagingSenderId: "693621188843",
-        appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
-      };
-      
       const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
       const auth = getAuth(app);
       
@@ -82,36 +89,37 @@ export default function HomePage() {
         ];
         setAllAccounts(mockAccountsData);
       } else {
+        // Only fetch data if user is authenticated
+        if (!user) {
+          setAllAccounts([]);
+          setError('Please sign in to view your accounts');
+          return;
+        }
         // Initialize Firebase Client SDK
-        // IMPORTANT: Replace with your actual Firebase config
-        const firebaseConfig = {
-          apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
-          authDomain: "accountviewer.firebaseapp.com",
-          projectId: "accountviewer",
-          storageBucket: "accountviewer.firebasestorage.app",
-          messagingSenderId: "693621188843",
-          appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
-        };
-        
         const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
         const db = getFirestore(app);
-        const accountsCollectionRef = collection(db, 'accounts');
-        const accountsSnapshot = await getDocs(accountsCollectionRef);
+        
+        // Get only the current user's document using their UID
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
 
-        if (accountsSnapshot.empty) {
+        if (!userDoc.exists()) {
           setAllAccounts([]);
           return;
         }
 
-        const accountsData = accountsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          // Firestore data is assumed to have 'unitcost' if 'securities' array exists
-          return {
-            id: doc.id,
-            name: data.name || 'N/A',
-            securities: data.securities || [], 
-          };
-        });
+        const userData = userDoc.data();
+        const accountsData: Account[] = [];
+        
+        if (userData.accounts && Array.isArray(userData.accounts)) {
+          userData.accounts.forEach((account: any) => {
+            accountsData.push({
+              id: account.id || `${user.uid}-${accountsData.length}`,
+              name: account.name || 'N/A',
+              securities: account.securities || [],
+            });
+          });
+        }
         
         setAllAccounts(accountsData);
       }
@@ -121,7 +129,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [dataSource]);
+  }, [dataSource, user]);
 
   useEffect(() => {
     fetchAccounts();
@@ -144,15 +152,7 @@ export default function HomePage() {
     setLoginError(null);
     try {
       // Get the existing Firebase app instance
-      const app = getApps().length === 0 ? initializeApp({
-        apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
-        authDomain: "accountviewer.firebaseapp.com",
-        projectId: "accountviewer",
-        storageBucket: "accountviewer.firebasestorage.app",
-        messagingSenderId: "693621188843",
-        appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
-      }) : getApps()[0];
-      
+      const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
       const auth = getAuth(app);
       await signInWithEmailAndPassword(auth, email, password);
       // await signInAnonymously(auth);
@@ -170,6 +170,42 @@ export default function HomePage() {
       await signOut(auth);
     } catch (error) {
       console.error("Logout error:", error);
+    }
+  };
+
+  const handleJsonSubmit = async () => {
+    setJsonError(null);
+    try {
+      // Parse the JSON
+      const userData = JSON.parse(userJson);
+      
+      // Validate that we have a user
+      if (!user) {
+        throw new Error("You must be signed in to update user data");
+      }
+      
+      // Initialize Firebase
+      const app = getApps()[0];
+      const db = getFirestore(app);
+      
+      // Reference to the user document
+      const userDocRef = doc(db, 'users', user.uid);
+      
+      // Set the document
+      await setDoc(userDocRef, userData, { merge: true });
+      
+      // Close dialog and show success message
+      setIsJsonDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "User data updated successfully",
+      });
+      
+      // Refresh accounts
+      fetchAccounts();
+    } catch (error: any) {
+      console.error("JSON update error:", error);
+      setJsonError(error.message || "Invalid JSON or update failed");
     }
   };
 
@@ -191,9 +227,14 @@ export default function HomePage() {
                 <Badge variant="default" className="bg-green-600">
                   Signed in as {user.email || user.displayName || 'User'}
                 </Badge>
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  Sign Out
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleLogout}>
+                    Sign Out
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setIsJsonDialogOpen(true)}>
+                    User JSON
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
@@ -294,6 +335,36 @@ export default function HomePage() {
           <p className="ml-2 text-muted-foreground">Loading more accounts...</p>
         </div>
       )}
+      
+      {/* Add the JSON Dialog */}
+      <Dialog open={isJsonDialogOpen} onOpenChange={setIsJsonDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Update User Data</DialogTitle>
+            <DialogDescription>
+              Enter JSON for your user document. This will update or create the document in Firestore.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {jsonError && (
+              <div className="text-sm text-destructive">{jsonError}</div>
+            )}
+            <div className="grid gap-2">
+              <Label htmlFor="userJson">User JSON</Label>
+              <Textarea
+                id="userJson"
+                value={userJson}
+                onChange={(e) => setUserJson(e.target.value)}
+                placeholder='{"accounts": [{"id": "account1", "name": "My Account", "securities": [{"description": "Apple Inc.", "quantity": 10, "symbol": "AAPL", "unitcost": 150.00}]}]}'
+                className="min-h-[200px] font-mono"
+              />
+            </div>
+            <Button onClick={handleJsonSubmit}>
+              Update User Data
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

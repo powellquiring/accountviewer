@@ -46,12 +46,12 @@ export async function GET(request: Request) {
 
   if (source === 'mock') {
     const mockSecurities: Security[] = [
-      { description: 'Apple Inc.', quantity: 10, symbol: 'AAPL', unitcost: 150.00 }, // Changed unitCost to unitcost
-      { description: 'Microsoft Corp.', quantity: 5, symbol: 'MSFT', unitcost: 280.50 }, // Changed unitCost to unitcost
+      { description: 'Apple Inc.', quantity: 10, symbol: 'AAPL', unitcost: 150.00 },
+      { description: 'Microsoft Corp.', quantity: 5, symbol: 'MSFT', unitcost: 280.50 },
     ];
     const mockAccounts: Account[] = [
       { id: 'mock-api-1', name: 'Mock API Brokerage', securities: mockSecurities },
-      { id: 'mock-api-2', name: 'Mock API Retirement', securities: [{ description: 'Tesla Inc.', quantity: 2, symbol: 'TSLA', unitcost: 700.00 }] }, // Changed unitCost to unitcost
+      { id: 'mock-api-2', name: 'Mock API Retirement', securities: [{ description: 'Tesla Inc.', quantity: 2, symbol: 'TSLA', unitcost: 700.00 }] },
       { id: 'mock-api-3', name: 'Mock API Custodial' },
     ];
     return NextResponse.json(mockAccounts);
@@ -60,22 +60,26 @@ export async function GET(request: Request) {
   try {
     initializeFirebaseAdmin();
     const db = getFirestore();
-    const accountsCollectionRef = collection(db, 'accounts');
-    const accountsSnapshot = await getDocs(accountsCollectionRef);
+    const usersCollectionRef = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollectionRef);
 
-    if (accountsSnapshot.empty) {
+    if (usersSnapshot.empty) {
       return NextResponse.json([]);
     }
 
-    const accounts: Account[] = accountsSnapshot.docs.map(doc => {
-      const data = doc.data();
-      // Firestore data is assumed to have 'unitcost' if 'securities' array exists
-      // No explicit mapping needed here as long as Firestore data matches the type
-      return {
-        id: doc.id,
-        name: data.name || 'N/A',
-        securities: data.securities || [], 
-      };
+    // Extract all accounts from all users
+    const accounts: Account[] = [];
+    usersSnapshot.docs.forEach(doc => {
+      const userData = doc.data();
+      if (userData.accounts && Array.isArray(userData.accounts)) {
+        userData.accounts.forEach((account: any) => {
+          accounts.push({
+            id: account.id || `${doc.id}-${accounts.length}`,
+            name: account.name || 'N/A',
+            securities: account.securities || [],
+          });
+        });
+      }
     });
 
     return NextResponse.json(accounts);
