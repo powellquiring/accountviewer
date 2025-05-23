@@ -14,7 +14,7 @@ import * as logger from "firebase-functions/logger";
 // });
 
 export const getMarketValues = onCall((request) => {
-  try {
+   try {
     const { symbols, times: timeStrings } = request.data;
     
     if (!symbols || !Array.isArray(symbols)) {
