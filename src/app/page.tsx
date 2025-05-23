@@ -257,7 +257,7 @@ export default function HomePage() {
       const app = getApps()[0];
       const functions = getFunctions(app);
       // testing:
-      // connectFunctionsEmulator(functions, "localhost", 5001);
+      connectFunctionsEmulator(functions, "localhost", 5001);
       
       // Call the getMarketValues function using httpsCallable
       const getMarketValuesFunction = httpsCallable(functions, 'getMarketValues');
@@ -267,9 +267,11 @@ export default function HomePage() {
       const data = result.data as any;
       const prices: Record<string, number> = {};
       
+        //data[0].values.forEach((item: {symbol: string, price: number}) => {
       if (data && data.length > 0 && data[0].values) {
-        data[0].values.forEach((item: {symbol: string, price: number}) => {
-          prices[item.symbol] = item.price;
+        const symbolValue = data[0].values as Record<string, number>;
+        Object.entries(symbolValue).forEach(([key, value]) => {
+          prices[key] = value;
         });
       }
       

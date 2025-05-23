@@ -14,19 +14,6 @@
       "url": "http://localhost:3000"
     },
     {
-      "name": "Next.js: debug client-side (Firefox)",
-      "type": "firefox",
-      "request": "launch",
-      "url": "http://localhost:3000",
-      "reAttach": true,
-      "pathMappings": [
-        {
-          "url": "webpack://_N_E",
-          "path": "${workspaceFolder}"
-        }
-      ]
-    },
-    {
       "name": "Next.js: debug full stack",
       "type": "node",
       "request": "launch",
@@ -40,6 +27,13 @@
         "uriFormat": "%s",
         "webRoot": "${workspaceFolder}"
       }
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "attach and debug on port 9230",
+      "port": 9230
     }
   ]
 }
+
