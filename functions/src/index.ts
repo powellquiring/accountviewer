@@ -11,14 +11,6 @@ interface MarketPrices {
   prices: Record<string, number>
 }
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
-
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
-
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 const SPREADSHEET_ID = '1hRzwZC6Sn7g3ZGYgna6503_jGuEfvCm2C5rchi4Vny8'
 const MOCK_PRICE = -0.02
@@ -156,7 +148,6 @@ export const getMarketValues = onCall(
       values: marketPrices.prices,
     }]
     logger.info("Returning", { ret, structuredData: true})
-
 
     return ret
   } catch (error) {
