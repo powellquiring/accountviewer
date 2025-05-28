@@ -221,7 +221,8 @@ export default function HomePage() {
       if (!account.securities) return;
       
       account.securities.forEach(security => {
-        const existing = securitiesMap.get(security.symbol);
+ if (security.stock && security.symbol) { // Only include if 'stock' is true and symbol exists
+ const existing = securitiesMap.get(security.symbol);
         
         if (existing) {
           // Calculate weighted average cost and sum quantities
@@ -237,6 +238,7 @@ export default function HomePage() {
         } else {
           securitiesMap.set(security.symbol, {...security});
         }
+ }
       });
     });
     
@@ -373,6 +375,35 @@ export default function HomePage() {
         )}
       </header>
 
+      {/* Combined Holdings section moved here */}
+      {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length > 0 && (
+        <div className="mt-8 mb-4">
+ <div className="flex justify-between items-center mb-4">
+ <h2 className="text-2xl font-semibold">Combined Holdings</h2>
+ <Button 
+ onClick={fetchMarketPrices} 
+ disabled={isLoadingPrices}
+ variant="outline"
+ size="sm"
+            >
+ {isLoadingPrices ? (
+ <>
+ <LoadingSpinner size={16} className="mr-2" />
+ Updating Prices...
+ </>
+ ) : (
+ "Get Market Prices"
+ )}
+ </Button>
+ </div>
+ {priceError && (
+ <div className="mb-4">
+ <ErrorMessage message={priceError} />
+ </div>
+ )}
+ <AccountCard key="combined-holdings" account={{ id: "combined-holdings", name: "Combined", securities: getCombinedSecurities() }} marketPrices={marketPrices} className="animate-in fade-in slide-in-from-bottom-5 duration-500" />
+ </div>
+      )}
       <div className="mb-6 flex justify-center">
         <Button onClick={toggleDataSource} variant="outline">
           Switch to {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
@@ -408,43 +439,6 @@ export default function HomePage() {
               style={{ animationDelay: `${index * 50}ms` }}
             />
           ))}
-        </div>
-      )}
-      {!isLoading && !error && renderedAccounts.length > 0 && (
-        <div className="mt-8 mb-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold">Combined Holdings</h2>
-            <Button 
-              onClick={fetchMarketPrices} 
-              disabled={isLoadingPrices}
-              variant="outline"
-              size="sm"
-            >
-              {isLoadingPrices ? (
-                <>
-                  <LoadingSpinner size={16} className="mr-2" />
-                  Updating Prices...
-                </>
-              ) : (
-                "Get Market Prices"
-              )}
-            </Button>
-          </div>
-          {priceError && (
-            <div className="mb-4">
-              <ErrorMessage message={priceError} />
-            </div>
-          )}
-          <AccountCard
-            key="combined-holdings"
-            account={{
-              id: "combined-holdings",
-              name: "Combined",
-              securities: getCombinedSecurities()
-            }}
-            marketPrices={marketPrices}
-            className="animate-in fade-in slide-in-from-bottom-5 duration-500"
-          />
         </div>
       )}
       {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length < allAccounts.length && (
