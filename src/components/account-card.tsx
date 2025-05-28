@@ -58,11 +58,11 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
                  <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('unitcost')}>
                    Unit Cost {sortBy === 'unitcost' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
-                 <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('unitcost')}> {/* Sorting total cost by unit cost as a proxy */}
-                   Total Cost {sortBy === 'unitcost' && (sortOrder === 'asc' ? '▲' : '▼')}
+                 <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('totalCost')}>
+                   Total Cost {sortBy === 'totalCost' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
-                 <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('value')}> {/* Sorting by calculated value */}
-                   Price {sortBy === 'value' && (sortOrder === 'asc' ? '▲' : '▼')}
+                 <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('price')}>
+                   Price {sortBy === 'price' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
                  <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('value')}> {/* Sorting by calculated value */}
                    Value {sortBy === 'value' && (sortOrder === 'asc' ? '▲' : '▼')}
@@ -81,6 +81,29 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
                    if (sortBy === 'value') {
                      if (sortOrder === 'asc') return aValue - bValue;
                      return bValue - aValue;
+                   }
+                   if (sortBy === 'symbol') {
+                     const aSymbol = a.symbol || '';
+                     const bSymbol = b.symbol || '';
+                     if (sortOrder === 'asc') return aSymbol.localeCompare(bSymbol);
+                     return bSymbol.localeCompare(aSymbol);
+                   }
+                   if (sortBy === 'totalCost') {
+                    // Added sorting logic for totalCost
+                   }
+                   if (sortBy === 'price') {
+                    const aPrice = typeof marketPrices[a.symbol || ''] === 'number' ? marketPrices[a.symbol || ''] : 0;
+                    const bPrice = typeof marketPrices[b.symbol || ''] === 'number' ? marketPrices[b.symbol || ''] : 0;
+                    if (sortOrder === 'asc') return aPrice - bPrice;
+                    return bPrice - aPrice;
+                   }
+                   if (sortBy === 'totalCost') {
+                   }
+                   if (sortBy === 'totalCost') {
+                     const aTotalCost = typeof a.quantity === 'number' && typeof a.unitcost === 'number' ? a.quantity * a.unitcost : 0;
+                     const bTotalCost = typeof b.quantity === 'number' && typeof b.unitcost === 'number' ? b.quantity * b.unitcost : 0;
+                     if (sortOrder === 'asc') return aTotalCost - bTotalCost;
+                     return bTotalCost - aTotalCost;
                    }
                    if (sortBy === 'return') {
                      const aReturn = typeof a.quantity === 'number' && typeof a.unitcost === 'number' && typeof marketPrices[a.symbol || ''] === 'number' ? (a.quantity * marketPrices[a.symbol || '']) - (a.quantity * a.unitcost) : 0;
