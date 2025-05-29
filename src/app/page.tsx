@@ -258,10 +258,10 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen container mx-auto px-2 py-4">
+    <main className="min-h-screen container mx-auto px-2 py-1">
       <TooltipProvider>
         {isMounted && (
-          <div className="mt-2">
+          <div className="mt-1 mb-1">
             {authLoading ? (
               <Badge variant="outline" className="animate-pulse">
                 Checking auth...
@@ -271,7 +271,7 @@ export default function HomePage() {
                 <div className="flex gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={handleLogout}>
+                      <Button variant="outline" onClick={handleLogout} className="h-auto py-[2px] px-3">
                         Sign Out
                       </Button>
                     </TooltipTrigger>
@@ -279,14 +279,14 @@ export default function HomePage() {
                       <p>{user.email || user.displayName || 'User'}</p>
                     </TooltipContent>
                   </Tooltip>
-                  <Button variant="outline" size="sm" onClick={() => setIsJsonDialogOpen(true)}>
+                  <Button variant="outline" onClick={() => setIsJsonDialogOpen(true)} className="h-auto py-[2px] px-3">
                     User JSON
                   </Button>
                   <Button 
                     onClick={fetchMarketPrices} 
                     disabled={isLoadingPrices || !getCombinedSecurities().length}
                     variant="outline"
-                    size="sm"
+                    className="h-auto py-[2px] px-3"
                   >
                     {isLoadingPrices ? (
                       <>
@@ -357,25 +357,25 @@ export default function HomePage() {
       </TooltipProvider>
 
       {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length > 0 && (
-        <div className="mt-4 mb-2">
+        <div className="mb-1">
           {priceError && (
-            <div className="mb-2">
+            <div className="mb-1">
               <ErrorMessage message={priceError} />
             </div>
           )}
           <AccountCard key="combined-holdings" account={{ id: "combined-holdings", name: "Combined", securities: getCombinedSecurities() }} marketPrices={marketPrices} className="animate-in fade-in slide-in-from-bottom-5 duration-500" />
         </div>
       )}
-      <div className="mb-3 flex justify-center">
+      <div className="mb-1 flex justify-center">
         <Button onClick={toggleDataSource} variant="outline" size="sm">
           Switch to {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
         </Button>
       </div>
 
-      {isLoading && <LoadingSpinner className="my-8" />}
+      {isLoading && <LoadingSpinner className="my-4" />}
 
       {error && !isLoading && (
-        <div className="my-8 flex flex-col items-center gap-2">
+        <div className="my-4 flex flex-col items-center gap-2">
           <ErrorMessage message={error} />
           <Button onClick={fetchAccounts} variant="outline" size="sm">
              Retry
@@ -384,14 +384,14 @@ export default function HomePage() {
       )}
 
       {!isLoading && !error && allAccounts.length === 0 && (
-         <div className="text-center text-muted-foreground py-5">
+         <div className="text-center text-muted-foreground py-3">
            <p className="text-lg">No accounts found for {dataSource === 'firestore' ? 'live' : 'mock'} source.</p>
            <p className="text-sm">Try adding some accounts or check back later.</p>
          </div>
       )}
 
       {!isLoading && !error && renderedAccounts.length > 0 && (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-2">
           {renderedAccounts.map((account, index) => (
             <AccountCard
               key={account.id}
@@ -404,7 +404,7 @@ export default function HomePage() {
         </div>
       )}
       {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length < allAccounts.length && (
-        <div className="mt-4 flex justify-center items-center">
+        <div className="mt-2 flex justify-center items-center">
           <LoadingSpinner size={20} />
           <p className="ml-2 text-sm text-muted-foreground">Loading more accounts...</p>
         </div>
