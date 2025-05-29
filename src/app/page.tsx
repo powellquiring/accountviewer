@@ -29,6 +29,11 @@ const firebaseConfig = {
   appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
 };
 
+// Add Firebase emulator constants
+const FIREBASE_EMULATOR_PORTS = {
+  functions: 5001
+};
+
 export default function HomePage() {
   // State declarations
   const [allAccounts, setAllAccounts] = useState<Account[]>([]);
@@ -49,6 +54,8 @@ export default function HomePage() {
   const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
   const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(false);
   const [priceError, setPriceError] = useState<string | null>(null);
+  const [isLocalhost, setIsLocalhost] = useState<boolean>(false);
+  const [isEmulatorActive, setIsEmulatorActive] = useState<boolean>(false);
   const { toast } = useToast();
       
   // Set isMounted to true when component mounts
@@ -73,6 +80,15 @@ export default function HomePage() {
       setAuthLoading(false);
     }
   }, []); 
+
+  // Add this effect to detect localhost
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isLocal = window.location.hostname === 'localhost' || 
+                      window.location.hostname === '127.0.0.1';
+      setIsLocalhost(isLocal);
+    }
+  }, []);
 
   const fetchAccounts = useCallback(async () => {
     setIsLoading(true);
@@ -233,7 +249,6 @@ export default function HomePage() {
       const symbols = securities.map(security => security.symbol);
       const app = getApps()[0];
       const functions = getFunctions(app);
-      // connectFunctionsEmulator(functions, "localhost", 5001);
       const getMarketValuesFunction = httpsCallable(functions, 'getMarketValues');
       const result = await getMarketValuesFunction({ symbols: symbols });
       const data = result.data as any;
@@ -254,6 +269,27 @@ export default function HomePage() {
       setPriceError(error.message || "Could not load market prices");
     } finally {
       setIsLoadingPrices(false);
+    }
+  };
+
+  // Add this function to handle emulator connection
+  const connectToEmulator = () => {
+    try {
+      const app = getApps()[0];
+      const functions = getFunctions(app);
+      connectFunctionsEmulator(functions, "localhost", FIREBASE_EMULATOR_PORTS.functions);
+      setIsEmulatorActive(true);
+      toast({
+        title: "Emulator Connected",
+        description: `Now using Firebase Functions emulator on localhost:${FIREBASE_EMULATOR_PORTS.functions}`,
+      });
+    } catch (error: any) {
+      console.error("Failed to connect to emulator:", error);
+      toast({
+        title: "Connection Failed",
+        description: error.message || "Could not connect to Functions emulator",
+        variant: "destructive",
+      });
     }
   };
 
@@ -300,6 +336,24 @@ export default function HomePage() {
                   <Button onClick={toggleDataSource} variant="outline" className="h-auto py-[2px] px-3 text-xs">
                     {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
                   </Button>
+                  {isLocalhost && (
+                    isEmulatorActive ? (
+                      <Badge 
+                        variant="outline" 
+                        className="h-auto py-[2px] px-3 text-xs bg-red-100 text-red-800 border-red-300"
+                      >
+                        Functions emulated port {FIREBASE_EMULATOR_PORTS.functions}
+                      </Badge>
+                    ) : (
+                      <Button 
+                        onClick={connectToEmulator} 
+                        variant="outline"
+                        className="h-auto py-[2px] px-3 text-xs"
+                      >
+                        Emulate Functions
+                      </Button>
+                    )
+                  )}
                 </div>
               </div>
             ) : (
