@@ -271,7 +271,7 @@ export default function HomePage() {
                 <div className="flex gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" onClick={handleLogout} className="h-auto py-[2px] px-3">
+                      <Button variant="outline" onClick={handleLogout} className="h-auto py-[2px] px-3 text-xs">
                         Sign Out
                       </Button>
                     </TooltipTrigger>
@@ -279,14 +279,14 @@ export default function HomePage() {
                       <p>{user.email || user.displayName || 'User'}</p>
                     </TooltipContent>
                   </Tooltip>
-                  <Button variant="outline" onClick={() => setIsJsonDialogOpen(true)} className="h-auto py-[2px] px-3">
+                  <Button variant="outline" onClick={() => setIsJsonDialogOpen(true)} className="h-auto py-[2px] px-3 text-xs">
                     User JSON
                   </Button>
                   <Button 
                     onClick={fetchMarketPrices} 
                     disabled={isLoadingPrices || !getCombinedSecurities().length}
                     variant="outline"
-                    className="h-auto py-[2px] px-3"
+                    className="h-auto py-[2px] px-3 text-xs"
                   >
                     {isLoadingPrices ? (
                       <>
@@ -297,7 +297,7 @@ export default function HomePage() {
                       "Update Prices"
                     )}
                   </Button>
-                  <Button onClick={toggleDataSource} variant="outline" className="h-auto py-[2px] px-3">
+                  <Button onClick={toggleDataSource} variant="outline" className="h-auto py-[2px] px-3 text-xs">
                     {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
                   </Button>
                 </div>
@@ -309,7 +309,7 @@ export default function HomePage() {
                 </Badge>
                 <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="default" size="sm">
+                    <Button variant="default" className="h-auto py-[2px] px-3 text-xs">
                       Sign In
                     </Button>
                   </DialogTrigger>
@@ -346,7 +346,7 @@ export default function HomePage() {
                             autoComplete="current-password"
                           />
                         </div>
-                        <Button type="submit" className="mt-2">
+                        <Button type="submit" className="mt-2 h-auto py-[2px] px-3 text-xs">
                           Sign In
                         </Button>
                       </div>
@@ -376,7 +376,7 @@ export default function HomePage() {
       {error && !isLoading && (
         <div className="my-4 flex flex-col items-center gap-2">
           <ErrorMessage message={error} />
-          <Button onClick={fetchAccounts} variant="outline" size="sm">
+          <Button onClick={fetchAccounts} variant="outline" className="h-auto py-[2px] px-3 text-xs">
              Retry
           </Button>
         </div>
@@ -431,7 +431,7 @@ export default function HomePage() {
                 className="min-h-[150px] font-mono text-xs"
               />
             </div>
-            <Button onClick={handleJsonSubmit} size="sm">
+            <Button onClick={handleJsonSubmit} className="h-auto py-[2px] px-3 text-xs">
               Update User Data
             </Button>
           </div>
@@ -440,3 +440,5 @@ export default function HomePage() {
     </main>
   );
 }
+
+    
