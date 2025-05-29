@@ -19,6 +19,16 @@ import { useToast } from '@/hooks/use-toast';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+// Moved firebaseConfig outside the component
+const firebaseConfig = {
+  apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
+  authDomain: "accountviewer.firebaseapp.com",
+  projectId: "accountviewer",
+  storageBucket: "accountviewer.firebasestorage.app",
+  messagingSenderId: "693621188843",
+  appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
+};
+
 export default function HomePage() {
   // State declarations
   const [allAccounts, setAllAccounts] = useState<Account[]>([]);
@@ -40,15 +50,6 @@ export default function HomePage() {
   const [isLoadingPrices, setIsLoadingPrices] = useState<boolean>(false);
   const [priceError, setPriceError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAglV5rgoSjtpf0W5EY5qeVWO_T1-Z_FI0",
-    authDomain: "accountviewer.firebaseapp.com",
-    projectId: "accountviewer",
-    storageBucket: "accountviewer.firebasestorage.app",
-    messagingSenderId: "693621188843",
-    appId: "1:693621188843:web:9d332a2bb0973d98bcb6ae"
-  };
       
   // Set isMounted to true when component mounts
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function HomePage() {
       console.error("Firebase auth initialization error:", error);
       setAuthLoading(false);
     }
-  }, []);
+  }, []); // Empty dependency array, firebaseConfig is stable
 
   const fetchAccounts = useCallback(async () => {
     setIsLoading(true);
@@ -133,7 +134,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [dataSource, user, firebaseConfig]);
+  }, [dataSource, user]); // Removed firebaseConfig from here as it's stable
 
   useEffect(() => {
     fetchAccounts();
