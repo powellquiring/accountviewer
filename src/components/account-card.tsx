@@ -38,7 +38,7 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
     <Card className={cn("shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col", className)} style={style}>
      <CardHeader className="p-2"> {/* Reduced padding */}
        <div className="flex items-center justify-start">
- <CardTitle className="text-lg font-semibold">{account.name}</CardTitle> {/* Smaller font, removed pl-4 */}
+ <CardTitle className="text-sm font-semibold">{account.name}</CardTitle> {/* Smaller font, removed pl-4 */}
        </div>
      </CardHeader>
      {account.securities && account.securities.length > 0 && (
