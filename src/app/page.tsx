@@ -297,6 +297,9 @@ export default function HomePage() {
                       "Get Market Prices"
                     )}
                   </Button>
+                  <Button onClick={toggleDataSource} variant="outline" className="h-auto py-[2px] px-3">
+                    Switch to {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -366,11 +369,7 @@ export default function HomePage() {
           <AccountCard key="combined-holdings" account={{ id: "combined-holdings", name: "Combined", securities: getCombinedSecurities() }} marketPrices={marketPrices} className="animate-in fade-in slide-in-from-bottom-5 duration-500" />
         </div>
       )}
-      <div className="mb-1 flex justify-center">
-        <Button onClick={toggleDataSource} variant="outline" size="sm">
-          Switch to {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
-        </Button>
-      </div>
+      
 
       {isLoading && <LoadingSpinner className="my-4" />}
 
