@@ -306,7 +306,7 @@ export default function HomePage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="sm" onClick={handleLogout}>
-                        Sign Out {user.email ? user.email.split('@')[0] : (user.displayName || 'User')}
+                        Sign Out
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
