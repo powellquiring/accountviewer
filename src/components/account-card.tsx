@@ -21,10 +21,10 @@ interface AccountCardProps {
 }
 
 export function AccountCard({ account, className, style, marketPrices = {} }: AccountCardProps) {
-  const [sortBy, setSortBy] = useState<keyof Security | 'value' | null>(null);
+  const [sortBy, setSortBy] = useState<keyof Security | 'value' | 'totalCost' | 'price' | 'return' | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  const handleSort = (column: keyof Security | 'value') => {
+  const handleSort = (column: keyof Security | 'value' | 'totalCost' | 'price' | 'return') => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -55,19 +55,19 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
  <TableHead className="h-8 px-2 text-right cursor-pointer hidden md:table-cell" onClick={() => handleSort('quantity')}>
                    Qty {sortBy === 'quantity' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
- <TableHead className="h-8 px-2 text-right cursor-pointer hidden lg:table-cell" onClick={() => handleSort('unitcost')}>
+ <TableHead className="h-8 px-2 text-right cursor-pointer hidden lg:table-cell w-[80px]" onClick={() => handleSort('unitcost')}>
                    Unit Cost {sortBy === 'unitcost' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
- <TableHead className="h-8 px-2 text-right cursor-pointer" onClick={() => handleSort('totalCost')}>
+ <TableHead className="h-8 px-2 text-right cursor-pointer w-[100px]" onClick={() => handleSort('totalCost')}>
                    Total Cost {sortBy === 'totalCost' && (sortOrder === 'asc' ? '▲' : '▼')}
  </TableHead> 
-                 <TableHead className="h-8 px-2 text-right cursor-pointer" onClick={() => handleSort('price')}>
+                 <TableHead className="h-8 px-2 text-right cursor-pointer w-[80px]" onClick={() => handleSort('price')}>
                    Price {sortBy === 'price' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
-                 <TableHead className="h-8 px-2 text-right cursor-pointer" onClick={() => handleSort('value')}> 
+                 <TableHead className="h-8 px-2 text-right cursor-pointer w-[100px]" onClick={() => handleSort('value')}> 
                    Value {sortBy === 'value' && (sortOrder === 'asc' ? '▲' : '▼')}
  </TableHead> 
-                 <TableHead className="h-8 px-2 text-right cursor-pointer" onClick={() => handleSort('return')}>
+                 <TableHead className="h-8 px-2 text-right cursor-pointer w-[100px]" onClick={() => handleSort('return')}>
                    Return {sortBy === 'return' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
                </TableRow>
@@ -75,8 +75,21 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
              <TableBody>
              {useMemo(() => {
                  const sortedSecurities = [...(account.securities || [])].sort((a, b) => {
-                   const aValue = typeof a.quantity === 'number' && typeof marketPrices[a.symbol || ''] === 'number' ? a.quantity * marketPrices[a.symbol || ''] : 0;
-                   const bValue = typeof b.quantity === 'number' && typeof marketPrices[b.symbol || ''] === 'number' ? b.quantity * marketPrices[b.symbol || ''] : 0;
+                   const aUnitcost = typeof a.unitcost === 'number' ? a.unitcost : 0;
+                   const bUnitcost = typeof b.unitcost === 'number' ? b.unitcost : 0;
+                   const aQuantity = typeof a.quantity === 'number' ? a.quantity : 0;
+                   const bQuantity = typeof b.quantity === 'number' ? b.quantity : 0;
+                   
+                   const aCurrentPrice = marketPrices[a.symbol || ''] || 0;
+                   const bCurrentPrice = marketPrices[b.symbol || ''] || 0;
+
+                   const aValue = aQuantity * aCurrentPrice;
+                   const bValue = bQuantity * bCurrentPrice;
+                   const aTotalCost = aQuantity * aUnitcost;
+                   const bTotalCost = bQuantity * bUnitcost;
+                   const aReturn = aValue - aTotalCost;
+                   const bReturn = bValue - bTotalCost;
+
 
                    if (sortBy === 'value') {
                      if (sortOrder === 'asc') return aValue - bValue;
@@ -88,34 +101,22 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
                      if (sortOrder === 'asc') return aSymbol.localeCompare(bSymbol);
                      return bSymbol.localeCompare(aSymbol);
                    }
-                   if (sortBy === 'totalCost') {
-                    // Added sorting logic for totalCost
-                   }
                    if (sortBy === 'price') {
-                    const aPrice = typeof marketPrices[a.symbol || ''] === 'number' ? marketPrices[a.symbol || ''] : 0;
-                    const bPrice = typeof marketPrices[b.symbol || ''] === 'number' ? marketPrices[b.symbol || ''] : 0;
-                    if (sortOrder === 'asc') return aPrice - bPrice;
-                    return bPrice - aPrice;
+                    if (sortOrder === 'asc') return aCurrentPrice - bCurrentPrice;
+                    return bCurrentPrice - aCurrentPrice;
                    }
                    if (sortBy === 'totalCost') {
-                   }
-                   if (sortBy === 'totalCost') {
-                     const aTotalCost = typeof a.quantity === 'number' && typeof a.unitcost === 'number' ? a.quantity * a.unitcost : 0;
-                     const bTotalCost = typeof b.quantity === 'number' && typeof b.unitcost === 'number' ? b.quantity * b.unitcost : 0;
                      if (sortOrder === 'asc') return aTotalCost - bTotalCost;
                      return bTotalCost - aTotalCost;
                    }
                    if (sortBy === 'return') {
-                     const aReturn = typeof a.quantity === 'number' && typeof a.unitcost === 'number' && typeof marketPrices[a.symbol || ''] === 'number' ? (a.quantity * marketPrices[a.symbol || '']) - (a.quantity * a.unitcost) : 0;
-                     const bReturn = typeof b.quantity === 'number' && typeof b.unitcost === 'number' && typeof marketPrices[b.symbol || ''] === 'number' ? (b.quantity * marketPrices[b.symbol || '']) - (b.quantity * b.unitcost) : 0;
                      if (sortOrder === 'asc') return aReturn - bReturn;
                      return bReturn - aReturn;
                    }
 
-                   if (sortBy && sortBy !== 'description') {
-                     const aVal = typeof (a as any)[sortBy] === 'number' ? (a as any)[sortBy] : Infinity * (sortOrder === 'asc' ? 1 : -1);
-                     const bVal = typeof (b as any)[sortBy] === 'number' ? (b as any)[sortBy] : Infinity * (sortOrder === 'asc' ? 1 : -1);
-
+                   if (sortBy && sortBy !== 'description' && sortBy in a && sortBy in b) {
+                     const aVal = typeof (a as any)[sortBy] === 'number' ? (a as any)[sortBy] : (sortOrder === 'asc' ? Infinity : -Infinity);
+                     const bVal = typeof (b as any)[sortBy] === 'number' ? (b as any)[sortBy] : (sortOrder === 'asc' ? Infinity : -Infinity);
 
                      if (aVal === bVal) return 0;
                      if (sortOrder === 'asc') return aVal < bVal ? -1 : 1;
@@ -131,6 +132,8 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
                    const description = security.description || 'No description';
                    const currentPrice = marketPrices[symbol] || 0;
                    const currentValue = quantity * currentPrice;
+                   const totalCostValue = quantity * unitcostValue;
+                   const returnValue = currentValue - totalCostValue;
 
 
                    return (
@@ -138,11 +141,11 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
                        <TableCell className="px-3 py-2 text-xs font-medium">{symbol}</TableCell>
                        <TableCell className="px-3 py-2 text-xs hidden md:table-cell">{description}</TableCell>
                        <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden md:table-cell">{quantity.toFixed(2)}</TableCell>
-                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden lg:table-cell">{unitcostValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
-                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{ (quantity * unitcostValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
+                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden lg:table-cell w-[80px]">{unitcostValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
+                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{totalCostValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
                        <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[80px]">{currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
                        <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{currentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
-                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{(currentValue - (quantity * unitcostValue)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
+                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{returnValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
                      </TableRow>
                    );
                  }).concat(
@@ -150,13 +153,13 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
                      <TableCell className="px-3 py-2 text-xs font-medium">Total</TableCell>
                      <TableCell className="px-3 py-2 text-xs hidden md:table-cell"></TableCell> 
                      <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden md:table-cell"></TableCell> 
-                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden lg:table-cell"></TableCell> 
+                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden lg:table-cell w-[80px]"></TableCell> 
  <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { 
                        const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
                        const unitcostValue = typeof security.unitcost === 'number' ? security.unitcost : 0;
                        return sum + quantity * unitcostValue;
  }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
-                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums"></TableCell> 
+                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[80px]"></TableCell> 
  <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { 
                        const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
                        return sum + quantity * (marketPrices[security.symbol || ''] || 0);
@@ -164,7 +167,8 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
  <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { 
                        const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
                        const unitcostValue = typeof security.unitcost === 'number' ? security.unitcost : 0;
-                       return sum + (quantity * (marketPrices[security.symbol || ''] || 0)) - (quantity * unitcostValue);
+                       const currentPrice = marketPrices[security.symbol || ''] || 0;
+                       return sum + (quantity * currentPrice) - (quantity * unitcostValue);
                      }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                    </TableRow>);
                }, [account.securities, marketPrices, sortBy, sortOrder])}
