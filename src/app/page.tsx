@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function HomePage() {
   // State declarations
@@ -81,13 +82,13 @@ export default function HomePage() {
     try {
       if (dataSource === 'mock') {
         const mockSecurities: Security[] = [
-          { description: 'Alphabet Inc.', quantity: 15, symbol: 'GOOGL', unitcost: 2500.00 },
-          { description: 'Amazon.com Inc.', quantity: 3, symbol: 'AMZN', unitcost: 3200.75 },
+          { description: 'Alphabet Inc.', quantity: 15, symbol: 'GOOGL', unitcost: 2500.00, stock: true },
+          { description: 'Amazon.com Inc.', quantity: 3, symbol: 'AMZN', unitcost: 3200.75, stock: true },
         ];
         const mockAccountsData: Account[] = [
           { id: 'mock-page-1', name: 'Mock Brokerage Account', securities: mockSecurities },
           { id: 'mock-page-2', name: 'Mock Savings Account' }, // No securities
-          { id: 'mock-page-3', name: 'Mock Investment Portfolio', securities: [{ description: 'Netflix Inc.', quantity: 7, symbol: 'NFLX', unitcost: 550.20 }] },
+          { id: 'mock-page-3', name: 'Mock Investment Portfolio', securities: [{ description: 'Netflix Inc.', quantity: 7, symbol: 'NFLX', unitcost: 550.20, stock: true }] },
           { id: 'mock-page-4', name: 'Mock College Fund' },
         ];
         setAllAccounts(mockAccountsData);
@@ -119,7 +120,7 @@ export default function HomePage() {
             accountsData.push({
               id: account.id || `${user.uid}-${accountsData.length}`,
               name: account.name || 'N/A',
-              securities: account.securities || [],
+              securities: (account.securities || []).map((s: any) => ({...s, unitcost: s.unitcost || 0, quantity: s.quantity || 0})),
             });
           });
         }
@@ -132,7 +133,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [dataSource, user]);
+  }, [dataSource, user, firebaseConfig]);
 
   useEffect(() => {
     fetchAccounts();
@@ -219,26 +220,24 @@ export default function HomePage() {
     
     allAccounts.forEach(account => {
       if (!account.securities) return;
-      
       account.securities.forEach(security => {
- if (security.stock && security.symbol) { // Only include if 'stock' is true and symbol exists
- const existing = securitiesMap.get(security.symbol);
-        
+        if (!security.stock) return;
+        // Calculate weighted average cost and sum quantities
+        const existing = securitiesMap.get(security.symbol);
         if (existing) {
-          // Calculate weighted average cost and sum quantities
           const totalQuantity = existing.quantity + security.quantity;
           const totalCost = (existing.quantity * existing.unitcost) + (security.quantity * security.unitcost);
-          
+
           securitiesMap.set(security.symbol, {
             symbol: security.symbol,
             description: security.description,
             quantity: totalQuantity,
-            unitcost: totalCost / totalQuantity
+            unitcost: totalCost / totalQuantity,
+            stock: security.stock,
           });
         } else {
           securitiesMap.set(security.symbol, {...security});
         }
- }
       });
     });
     
@@ -293,11 +292,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen container mx-auto px-4 py-8">
-      <header className="mb-8 text-center">
-        <h1 className="text-5xl font-bold text-primary tracking-tight">AccountViewer</h1>
-        <p className="mt-2 text-lg text-muted-foreground">
-          Your accounts, displayed progressively.
-        </p>
+      <TooltipProvider>
         {isMounted && (
           <div className="mt-4">
             {authLoading ? (
@@ -306,13 +301,17 @@ export default function HomePage() {
               </Badge>
             ) : user ? (
               <div className="flex flex-col items-center gap-2">
-                <Badge variant="default" className="bg-green-600">
-                  Signed in as {user.email || user.displayName || 'User'}
-                </Badge>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleLogout}>
-                    Sign Out
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="sm" onClick={handleLogout}>
+                        Sign Out {user.email ? user.email.split('@')[0] : (user.displayName || 'User')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{user.email || user.displayName || 'User'}</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <Button variant="outline" size="sm" onClick={() => setIsJsonDialogOpen(true)}>
                     User JSON
                   </Button>
@@ -373,7 +372,7 @@ export default function HomePage() {
             )}
           </div>
         )}
-      </header>
+      </TooltipProvider>
 
       {/* Combined Holdings section moved here */}
       {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length > 0 && (
@@ -467,7 +466,7 @@ export default function HomePage() {
                 id="userJson"
                 value={userJson}
                 onChange={(e) => setUserJson(e.target.value)}
-                placeholder='{"accounts": [{"id": "account1", "name": "My Account", "securities": [{"description": "Apple Inc.", "quantity": 10, "symbol": "AAPL", "unitcost": 150.00}]}]}'
+                placeholder='{"accounts": [{"id": "account1", "name": "My Account", "securities": [{"description": "Apple Inc.", "quantity": 10, "symbol": "AAPL", "unitcost": 150.00, "stock": true}]}]}'
                 className="min-h-[200px] font-mono"
               />
             </div>
@@ -480,3 +479,5 @@ export default function HomePage() {
     </main>
   );
 }
+
+    

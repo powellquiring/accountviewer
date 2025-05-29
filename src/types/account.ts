@@ -1,5 +1,6 @@
 
 export interface Security {
+  stock: boolean;
   description: string;
   quantity: number;
   symbol: string;
