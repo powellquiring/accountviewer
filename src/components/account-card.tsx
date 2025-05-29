@@ -42,7 +42,7 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
        </div>
      </CardHeader>
      {account.securities && account.securities.length > 0 && (
-       <CardContent className="pt-1 pb-2 flex-grow">
+       <CardContent className="pt-1 pb-2 px-0 flex-grow">
          
         <ScrollArea className="rounded-md border w-full overflow-x-auto">
            <Table>
