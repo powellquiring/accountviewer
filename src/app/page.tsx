@@ -72,7 +72,7 @@ export default function HomePage() {
       console.error("Firebase auth initialization error:", error);
       setAuthLoading(false);
     }
-  }, []); // Empty dependency array, firebaseConfig is stable
+  }, []); 
 
   const fetchAccounts = useCallback(async () => {
     setIsLoading(true);
@@ -88,23 +88,20 @@ export default function HomePage() {
         ];
         const mockAccountsData: Account[] = [
           { id: 'mock-page-1', name: 'Mock Brokerage Account', securities: mockSecurities },
-          { id: 'mock-page-2', name: 'Mock Savings Account' }, // No securities
+          { id: 'mock-page-2', name: 'Mock Savings Account' }, 
           { id: 'mock-page-3', name: 'Mock Investment Portfolio', securities: [{ description: 'Netflix Inc.', quantity: 7, symbol: 'NFLX', unitcost: 550.20, stock: true }] },
           { id: 'mock-page-4', name: 'Mock College Fund' },
         ];
         setAllAccounts(mockAccountsData);
       } else {
-        // Only fetch data if user is authenticated
         if (!user) {
           setAllAccounts([]);
           setError('Please sign in to view your accounts');
           return;
         }
-        // Initialize Firebase Client SDK
         const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
         const db = getFirestore(app);
         
-        // Get only the current user's document using their UID
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
 
@@ -144,7 +141,7 @@ export default function HomePage() {
     if (allAccounts.length > 0 && renderedAccounts.length < allAccounts.length) {
       const timer = setTimeout(() => {
         setRenderedAccounts(prev => [...prev, allAccounts[prev.length]]);
-      }, 200); // Progressive rendering delay
+      }, 100); // Reduced progressive rendering delay
       return () => clearTimeout(timer);
     }
   }, [allAccounts, renderedAccounts]);
@@ -156,11 +153,9 @@ export default function HomePage() {
   const handleLogin = async () => {
     setLoginError(null);
     try {
-      // Get the existing Firebase app instance
       const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
       const auth = getAuth(app);
       await signInWithEmailAndPassword(auth, email, password);
-      // await signInAnonymously(auth);
       setIsLoginOpen(false);
     } catch (error: any) {
       console.error("Login error:", error);
@@ -181,32 +176,19 @@ export default function HomePage() {
   const handleJsonSubmit = async () => {
     setJsonError(null);
     try {
-      // Parse the JSON
       const userData = JSON.parse(userJson);
-      
-      // Validate that we have a user
       if (!user) {
         throw new Error("You must be signed in to update user data");
       }
-      
-      // Initialize Firebase
       const app = getApps()[0];
       const db = getFirestore(app);
-      
-      // Reference to the user document
       const userDocRef = doc(db, 'users', user.uid);
-      
-      // Set the document
       await setDoc(userDocRef, userData, { merge: true });
-      
-      // Close dialog and show success message
       setIsJsonDialogOpen(false);
       toast({
         title: "Success",
         description: "User data updated successfully",
       });
-      
-      // Refresh accounts
       fetchAccounts();
     } catch (error: any) {
       console.error("JSON update error:", error);
@@ -216,19 +198,15 @@ export default function HomePage() {
 
   const getCombinedSecurities = useCallback((): Security[] => {
     if (!allAccounts.length) return [];
-    
     const securitiesMap = new Map<string, Security>();
-    
     allAccounts.forEach(account => {
       if (!account.securities) return;
       account.securities.forEach(security => {
         if (!security.stock) return;
-        // Calculate weighted average cost and sum quantities
         const existing = securitiesMap.get(security.symbol);
         if (existing) {
           const totalQuantity = existing.quantity + security.quantity;
           const totalCost = (existing.quantity * existing.unitcost) + (security.quantity * security.unitcost);
-
           securitiesMap.set(security.symbol, {
             symbol: security.symbol,
             description: security.description,
@@ -241,7 +219,6 @@ export default function HomePage() {
         }
       });
     });
-    
     return Array.from(securitiesMap.values());
   }, [allAccounts]);
 
@@ -254,31 +231,20 @@ export default function HomePage() {
     
     try {
       const symbols = securities.map(security => security.symbol);
-      
-      // Initialize Firebase functions
       const app = getApps()[0];
       const functions = getFunctions(app);
-      // testing:
       // connectFunctionsEmulator(functions, "localhost", 5001);
-      
-      // Call the getMarketValues function using httpsCallable
       const getMarketValuesFunction = httpsCallable(functions, 'getMarketValues');
       const result = await getMarketValuesFunction({ symbols: symbols });
-      
-      // Process the response to create a symbol -> price mapping
       const data = result.data as any;
       const prices: Record<string, number> = {};
-      
-        //data[0].values.forEach((item: {symbol: string, price: number}) => {
       if (data && data.length > 0 && data[0].values) {
         const symbolValue = data[0].values as Record<string, number>;
         Object.entries(symbolValue).forEach(([key, value]) => {
           prices[key] = value;
         });
       }
-      
       setMarketPrices(prices);
-      
       toast({
         title: "Prices Updated",
         description: "Market prices have been refreshed",
@@ -292,16 +258,16 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen container mx-auto px-4 py-8">
+    <main className="min-h-screen container mx-auto px-2 py-4">
       <TooltipProvider>
         {isMounted && (
-          <div className="mt-4">
+          <div className="mt-2">
             {authLoading ? (
               <Badge variant="outline" className="animate-pulse">
                 Checking auth...
               </Badge>
             ) : user ? (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <div className="flex gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -325,7 +291,7 @@ export default function HomePage() {
                     {isLoadingPrices ? (
                       <>
                         <LoadingSpinner size={16} className="mr-2" />
-                        Updating Prices...
+                        Updating...
                       </>
                     ) : (
                       "Get Market Prices"
@@ -334,7 +300,7 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <Badge variant="secondary">
                   Not signed in
                 </Badge>
@@ -352,11 +318,11 @@ export default function HomePage() {
                       </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-                      <div className="grid gap-4 py-4">
+                      <div className="grid gap-2 py-2">
                         {loginError && (
                           <div className="text-sm text-destructive">{loginError}</div>
                         )}
-                        <div className="grid gap-2">
+                        <div className="grid gap-1">
                           <Label htmlFor="email">Email</Label>
                           <Input
                             id="email"
@@ -367,7 +333,7 @@ export default function HomePage() {
                             autoComplete="username"
                           />
                         </div>
-                        <div className="grid gap-2">
+                        <div className="grid gap-1">
                           <Label htmlFor="password">Password</Label>
                           <Input
                             id="password"
@@ -390,44 +356,42 @@ export default function HomePage() {
         )}
       </TooltipProvider>
 
-      {/* Combined Holdings section moved here */}
       {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length > 0 && (
-        <div className="mt-8 mb-4">
-          {/* Removed "Combined Holdings" header */}
+        <div className="mt-4 mb-2">
           {priceError && (
-            <div className="mb-4">
+            <div className="mb-2">
               <ErrorMessage message={priceError} />
             </div>
           )}
           <AccountCard key="combined-holdings" account={{ id: "combined-holdings", name: "Combined", securities: getCombinedSecurities() }} marketPrices={marketPrices} className="animate-in fade-in slide-in-from-bottom-5 duration-500" />
         </div>
       )}
-      <div className="mb-6 flex justify-center">
-        <Button onClick={toggleDataSource} variant="outline">
+      <div className="mb-3 flex justify-center">
+        <Button onClick={toggleDataSource} variant="outline" size="sm">
           Switch to {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
         </Button>
       </div>
 
-      {isLoading && <LoadingSpinner className="my-16" />}
+      {isLoading && <LoadingSpinner className="my-8" />}
 
       {error && !isLoading && (
-        <div className="my-16 flex flex-col items-center gap-4">
+        <div className="my-8 flex flex-col items-center gap-2">
           <ErrorMessage message={error} />
-          <Button onClick={fetchAccounts} variant="outline">
+          <Button onClick={fetchAccounts} variant="outline" size="sm">
              Retry
           </Button>
         </div>
       )}
 
       {!isLoading && !error && allAccounts.length === 0 && (
-         <div className="text-center text-muted-foreground py-10">
-           <p className="text-xl">No accounts found for {dataSource === 'firestore' ? 'live' : 'mock'} source.</p>
-           <p>Try adding some accounts or check back later.</p>
+         <div className="text-center text-muted-foreground py-5">
+           <p className="text-lg">No accounts found for {dataSource === 'firestore' ? 'live' : 'mock'} source.</p>
+           <p className="text-sm">Try adding some accounts or check back later.</p>
          </div>
       )}
 
       {!isLoading && !error && renderedAccounts.length > 0 && (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-3">
           {renderedAccounts.map((account, index) => (
             <AccountCard
               key={account.id}
@@ -440,13 +404,12 @@ export default function HomePage() {
         </div>
       )}
       {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length < allAccounts.length && (
-        <div className="mt-8 flex justify-center items-center">
-          <LoadingSpinner size={24} />
-          <p className="ml-2 text-muted-foreground">Loading more accounts...</p>
+        <div className="mt-4 flex justify-center items-center">
+          <LoadingSpinner size={20} />
+          <p className="ml-2 text-sm text-muted-foreground">Loading more accounts...</p>
         </div>
       )}
       
-      {/* Add the JSON Dialog */}
       <Dialog open={isJsonDialogOpen} onOpenChange={setIsJsonDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -455,21 +418,21 @@ export default function HomePage() {
               Enter JSON for your user document. This will update or create the document in Firestore.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-2 py-2">
             {jsonError && (
               <div className="text-sm text-destructive">{jsonError}</div>
             )}
-            <div className="grid gap-2">
+            <div className="grid gap-1">
               <Label htmlFor="userJson">User JSON</Label>
               <Textarea
                 id="userJson"
                 value={userJson}
                 onChange={(e) => setUserJson(e.target.value)}
                 placeholder='{"accounts": [{"id": "account1", "name": "My Account", "securities": [{"description": "Apple Inc.", "quantity": 10, "symbol": "AAPL", "unitcost": 150.00, "stock": true}]}]}'
-                className="min-h-[200px] font-mono"
+                className="min-h-[150px] font-mono text-xs"
               />
             </div>
-            <Button onClick={handleJsonSubmit}>
+            <Button onClick={handleJsonSubmit} size="sm">
               Update User Data
             </Button>
           </div>
