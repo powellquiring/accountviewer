@@ -2,11 +2,14 @@ import dotenv from 'dotenv'
 import fs from 'fs/promises'
 import path from 'path'
 import { parse } from 'csv-parse/sync'
+import yahooFinance from 'yahoo-finance2';
+
 
 dotenv.config()
 
 interface Security {
   symbol: string
+  description: string
   quantity: number
   cost: number
   stock: boolean
@@ -50,6 +53,19 @@ const DESCRIPTION = 'Description'
 // Base directory for securities data
 function getSecuritiesBaseDir(): string {
   return process.env.SECURITIES_BASE_DIR || '/Users/powellquiring/track'
+}
+
+async function stockDescription(name:string): Promise<string> {
+  if (name === 'BRK.B') {
+    name = 'BRK-B'
+  }
+  try {
+    const quote = await yahooFinance.quote(name)
+    return quote.longName ? quote.longName : name
+  } catch (error) {
+    // console.error(`Error fetching description for ${name}:`, error)
+    return name
+  }
 }
 
 function parseEtradeContent(content: string): ParseResult {
@@ -397,22 +413,23 @@ const lists = ["watchlist"]
 for (let i = 0; i < lists.length; i++) {
   const listId = lists[i]
   const securities = await getSecuritiesByListId(listId)
-  securities.securities.forEach((account) => {
+  for (const account of securities.securities) {
     const printSecurities: PrintSecurity[] = []
-    account.securities.forEach((security) => {
+    for (const security of account.securities) {
+      const description:string = await stockDescription(security.symbol)
       printSecurities.push({
-        description: security.symbol,
+        description: description,
         quantity: security.quantity,
         symbol: security.symbol,
         unitcost: security.cost,
         stock: security.stock,
       })
-    })
+    }
     ret.accounts.push({
       id: account.name,
       name: account.name,
       securities: printSecurities
     })
-  })
+  }
 }
 console.log(JSON.stringify(ret, null, 2))

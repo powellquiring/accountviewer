@@ -2,7 +2,7 @@
 "use client";
 
 import type { Account, Security } from '@/types/account';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { AccountCard } from '@/components/account-card';
 import { LoadingSpinner } from '@/components/loading-spinner';
 import { ErrorMessage } from '@/components/error-message';
@@ -33,6 +33,8 @@ const firebaseConfig = {
 const FIREBASE_EMULATOR_PORTS = {
   functions: 5001
 };
+
+const MARKET_PRICES_STORAGE_KEY = 'accountviewer_market_prices';
 
 export default function HomePage() {
   // State declarations
@@ -260,6 +262,10 @@ export default function HomePage() {
         });
       }
       setMarketPrices(prices);
+      
+      // Save to localStorage
+      localStorage.setItem(MARKET_PRICES_STORAGE_KEY, JSON.stringify(prices));
+      
       toast({
         title: "Prices Updated",
         description: "Market prices have been refreshed",
@@ -292,6 +298,20 @@ export default function HomePage() {
       });
     }
   };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isMounted) {
+      try {
+        const storedPrices = localStorage.getItem(MARKET_PRICES_STORAGE_KEY);
+        if (storedPrices) {
+          const parsedPrices = JSON.parse(storedPrices);
+          setMarketPrices(parsedPrices);
+        }
+      } catch (error) {
+        console.error("Failed to load market prices from storage:", error);
+      }
+    }
+  }, [isMounted]);
 
   return (
     <main className="min-h-screen container mx-auto px-2 py-1">
