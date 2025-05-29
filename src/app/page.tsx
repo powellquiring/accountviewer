@@ -259,7 +259,7 @@ export default function HomePage() {
       const app = getApps()[0];
       const functions = getFunctions(app);
       // testing:
-      connectFunctionsEmulator(functions, "localhost", 5001);
+      // connectFunctionsEmulator(functions, "localhost", 5001);
       
       // Call the getMarketValues function using httpsCallable
       const getMarketValuesFunction = httpsCallable(functions, 'getMarketValues');

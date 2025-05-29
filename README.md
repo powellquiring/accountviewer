@@ -66,3 +66,17 @@ Take note of the debug port - in my case 9230.  Then attach in the vscode debugg
       "port": 9230
     }
 ```
+
+## Deploying function
+
+```
+firebase deploy --only functions
+```
+
+## tsx
+The tsx directory contains a tool to generate a json file from downloaded accounts csv files. It supports Etrade, Fidelity, and Robinhood .  It is a node app that can be run with tsx.
+
+```
+cd tsx
+npx tsx tool.ts
+```

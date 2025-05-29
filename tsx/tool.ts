@@ -391,9 +391,11 @@ interface Print {
   accounts: PrintAccount[]
 }
 const ret: Print = {accounts: []}
-const securitiesLists = await getSecuritiesLists()
-for (let i = 0; i < securitiesLists.lists.length; i++) {
-  const listId = securitiesLists.lists[i]
+// const securitiesLists = await getSecuritiesLists()
+//const lists = securitiesLists.lists
+const lists = ["watchlist"]
+for (let i = 0; i < lists.length; i++) {
+  const listId = lists[i]
   const securities = await getSecuritiesByListId(listId)
   securities.securities.forEach((account) => {
     const printSecurities: PrintSecurity[] = []
