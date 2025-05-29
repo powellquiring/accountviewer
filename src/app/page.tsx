@@ -134,7 +134,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [dataSource, user]); // Removed firebaseConfig from here as it's stable
+  }, [dataSource, user]);
 
   useEffect(() => {
     fetchAccounts();
@@ -316,6 +316,21 @@ export default function HomePage() {
                   <Button variant="outline" size="sm" onClick={() => setIsJsonDialogOpen(true)}>
                     User JSON
                   </Button>
+                  <Button 
+                    onClick={fetchMarketPrices} 
+                    disabled={isLoadingPrices || !getCombinedSecurities().length}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {isLoadingPrices ? (
+                      <>
+                        <LoadingSpinner size={16} className="mr-2" />
+                        Updating Prices...
+                      </>
+                    ) : (
+                      "Get Market Prices"
+                    )}
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -378,31 +393,16 @@ export default function HomePage() {
       {/* Combined Holdings section moved here */}
       {!isLoading && !error && allAccounts.length > 0 && renderedAccounts.length > 0 && (
         <div className="mt-8 mb-4">
- <div className="flex justify-between items-center mb-4">
- <h2 className="text-2xl font-semibold">Combined Holdings</h2>
- <Button 
- onClick={fetchMarketPrices} 
- disabled={isLoadingPrices}
- variant="outline"
- size="sm"
-            >
- {isLoadingPrices ? (
- <>
- <LoadingSpinner size={16} className="mr-2" />
- Updating Prices...
- </>
- ) : (
- "Get Market Prices"
- )}
- </Button>
- </div>
- {priceError && (
- <div className="mb-4">
- <ErrorMessage message={priceError} />
- </div>
- )}
- <AccountCard key="combined-holdings" account={{ id: "combined-holdings", name: "Combined", securities: getCombinedSecurities() }} marketPrices={marketPrices} className="animate-in fade-in slide-in-from-bottom-5 duration-500" />
- </div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">Combined Holdings</h2>
+          </div>
+          {priceError && (
+            <div className="mb-4">
+              <ErrorMessage message={priceError} />
+            </div>
+          )}
+          <AccountCard key="combined-holdings" account={{ id: "combined-holdings", name: "Combined", securities: getCombinedSecurities() }} marketPrices={marketPrices} className="animate-in fade-in slide-in-from-bottom-5 duration-500" />
+        </div>
       )}
       <div className="mb-6 flex justify-center">
         <Button onClick={toggleDataSource} variant="outline">
@@ -480,5 +480,3 @@ export default function HomePage() {
     </main>
   );
 }
-
-    
