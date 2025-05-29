@@ -43,7 +43,7 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
      </CardHeader>
      {account.securities && account.securities.length > 0 && (
        <CardContent className="pt-2 pb-4 flex-grow">
-         <CardDescription className="mb-2 text-sm font-medium text-center">Securities</CardDescription>
+         
  <ScrollArea className="rounded-md border w-full overflow-x-auto">
            <Table>
              <TableHeader>
@@ -74,7 +74,7 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
              </TableHeader>
              <TableBody>
              {useMemo(() => {
-                 const sortedSecurities = [...account.securities].sort((a, b) => {
+                 const sortedSecurities = [...(account.securities || [])].sort((a, b) => {
                    const aValue = typeof a.quantity === 'number' && typeof marketPrices[a.symbol || ''] === 'number' ? a.quantity * marketPrices[a.symbol || ''] : 0;
                    const bValue = typeof b.quantity === 'number' && typeof marketPrices[b.symbol || ''] === 'number' ? b.quantity * marketPrices[b.symbol || ''] : 0;
 
@@ -113,8 +113,9 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
                    }
 
                    if (sortBy && sortBy !== 'description') {
-                     const aVal = typeof a[sortBy] === 'number' ? a[sortBy] : Infinity * (sortOrder === 'asc' ? 1 : -1);
-                     const bVal = typeof b[sortBy] === 'number' ? b[sortBy] : Infinity * (sortOrder === 'asc' ? 1 : -1);
+                     const aVal = typeof (a as any)[sortBy] === 'number' ? (a as any)[sortBy] : Infinity * (sortOrder === 'asc' ? 1 : -1);
+                     const bVal = typeof (b as any)[sortBy] === 'number' ? (b as any)[sortBy] : Infinity * (sortOrder === 'asc' ? 1 : -1);
+
 
                      if (aVal === bVal) return 0;
                      if (sortOrder === 'asc') return aVal < bVal ? -1 : 1;
