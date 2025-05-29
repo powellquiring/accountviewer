@@ -1,6 +1,6 @@
 
 import type { Account, Security } from '@/types/account';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import React, { useState, useMemo } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -47,27 +47,27 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
  <ScrollArea className="rounded-md border w-full overflow-x-auto">
            <Table>
              <TableHeader>
-               <TableRow className="[&>th]:text-xs">
-                 <TableHead className="h-10 px-3 cursor-pointer w-1/12" onClick={() => handleSort('symbol')}>
+               <TableRow className="[&>th]:text-[10px] [&>th]:font-semibold">
+                 <TableHead className="h-8 px-2 cursor-pointer w-1/12" onClick={() => handleSort('symbol')}>
                    Sym {sortBy === 'symbol' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
- <TableHead className="h-10 px-3 text-xs hidden md:table-cell">Description</TableHead>
- <TableHead className="h-10 px-3 text-right cursor-pointer hidden md:table-cell" onClick={() => handleSort('quantity')}>
+ <TableHead className="h-8 px-2 hidden md:table-cell">Description</TableHead>
+ <TableHead className="h-8 px-2 text-right cursor-pointer hidden md:table-cell" onClick={() => handleSort('quantity')}>
                    Qty {sortBy === 'quantity' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
- <TableHead className="h-10 px-3 text-right cursor-pointer hidden lg:table-cell" onClick={() => handleSort('unitcost')}>
+ <TableHead className="h-8 px-2 text-right cursor-pointer hidden lg:table-cell" onClick={() => handleSort('unitcost')}>
                    Unit Cost {sortBy === 'unitcost' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
- <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('totalCost')}>
+ <TableHead className="h-8 px-2 text-right cursor-pointer" onClick={() => handleSort('totalCost')}>
                    Total Cost {sortBy === 'totalCost' && (sortOrder === 'asc' ? '▲' : '▼')}
- </TableHead> {/* This column should be removed if not needed for small screens */}
-                 <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('price')}>
+ </TableHead> 
+                 <TableHead className="h-8 px-2 text-right cursor-pointer" onClick={() => handleSort('price')}>
                    Price {sortBy === 'price' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
-                 <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('value')}> {/* Sorting by calculated value */}
+                 <TableHead className="h-8 px-2 text-right cursor-pointer" onClick={() => handleSort('value')}> 
                    Value {sortBy === 'value' && (sortOrder === 'asc' ? '▲' : '▼')}
- </TableHead> {/* This column should be the main focus on small screens */}
-                 <TableHead className="h-10 px-3 text-right cursor-pointer" onClick={() => handleSort('return')}>
+ </TableHead> 
+                 <TableHead className="h-8 px-2 text-right cursor-pointer" onClick={() => handleSort('return')}>
                    Return {sortBy === 'return' && (sortOrder === 'asc' ? '▲' : '▼')}
                  </TableHead>
                </TableRow>
@@ -121,13 +121,10 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
                      if (sortOrder === 'asc') return aVal < bVal ? -1 : 1;
                      return bVal < aVal ? -1 : 1;
                    }
-                   return 0; // No sorting or sorting by description (which is not sortable)
+                   return 0; 
                  });
 
                  return sortedSecurities.map((security: Security, index: number) => {
-                   let totalValue = 0;
-                   let totalTotalCost = 0;
-
                    const unitcostValue = typeof security.unitcost === 'number' ? security.unitcost : 0;
                    const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
                    const symbol = security.symbol || 'N/A';
@@ -137,34 +134,34 @@ export function AccountCard({ account, className, style, marketPrices = {} }: Ac
 
 
                    return (
- <TableRow key={index} className="[&>td]:px-2 [&>td]:py-1 [&>td]:text-xs"> {/* Reduced padding and font size */}
+ <TableRow key={index} className="[&>td]:px-2 [&>td]:py-1 [&>td]:text-xs"> 
                        <TableCell className="px-3 py-2 text-xs font-medium">{symbol}</TableCell>
                        <TableCell className="px-3 py-2 text-xs hidden md:table-cell">{description}</TableCell>
                        <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden md:table-cell">{quantity.toFixed(2)}</TableCell>
-                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden lg:table-cell">{unitcostValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> {/* Removed $ */}
-                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{ (quantity * unitcostValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> {/* Removed $ and set width */}
-                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[80px]">{currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> {/* Removed $ and set width */}
-                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{currentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> {/* Removed $ and set width */}
-                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{(currentValue - (quantity * unitcostValue)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> {/* Removed $ and set width */}
+                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden lg:table-cell">{unitcostValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
+                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{ (quantity * unitcostValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
+                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[80px]">{currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
+                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{currentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
+                       <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{(currentValue - (quantity * unitcostValue)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
                      </TableRow>
                    );
                  }).concat(
- <TableRow key="total" className="[&>td]:px-2 [&>td]:py-1 [&>td]:text-xs font-bold"> {/* Reduced padding and font size, added bold */}
+ <TableRow key="total" className="[&>td]:px-2 [&>td]:py-1 [&>td]:text-xs font-bold"> 
                      <TableCell className="px-3 py-2 text-xs font-medium">Total</TableCell>
-                     <TableCell className="px-3 py-2 text-xs hidden md:table-cell"></TableCell> {/* Empty Description */}
-                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden md:table-cell"></TableCell> {/* Empty Quantity */}
-                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden lg:table-cell"></TableCell> {/* Empty Unit Cost */}
- <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { {/* Removed $ and set width */}
+                     <TableCell className="px-3 py-2 text-xs hidden md:table-cell"></TableCell> 
+                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden md:table-cell"></TableCell> 
+                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums hidden lg:table-cell"></TableCell> 
+ <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { 
                        const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
                        const unitcostValue = typeof security.unitcost === 'number' ? security.unitcost : 0;
                        return sum + quantity * unitcostValue;
- }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> {/* This cell now aligns with Total Cost */}
-                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums"></TableCell> {/* Empty Price */}
- <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { {/* Removed $ and set width */}
+ }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell> 
+                     <TableCell className="px-3 py-2 text-xs text-right tabular-nums"></TableCell> 
+ <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { 
                        const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
                        return sum + quantity * (marketPrices[security.symbol || ''] || 0);
  }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
- <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { {/* Removed $ and set width */}
+ <TableCell className="px-3 py-2 text-xs text-right tabular-nums w-[100px]">{sortedSecurities.reduce((sum, security) => { 
                        const quantity = typeof security.quantity === 'number' ? security.quantity : 0;
                        const unitcostValue = typeof security.unitcost === 'number' ? security.unitcost : 0;
                        return sum + (quantity * (marketPrices[security.symbol || ''] || 0)) - (quantity * unitcostValue);
