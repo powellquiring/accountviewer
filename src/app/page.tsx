@@ -294,11 +294,11 @@ export default function HomePage() {
                         Updating...
                       </>
                     ) : (
-                      "Get Market Prices"
+                      "Update Prices"
                     )}
                   </Button>
                   <Button onClick={toggleDataSource} variant="outline" className="h-auto py-[2px] px-3">
-                    Switch to {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
+                    {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
                   </Button>
                 </div>
               </div>
@@ -412,7 +412,7 @@ export default function HomePage() {
       <Dialog open={isJsonDialogOpen} onOpenChange={setIsJsonDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Update User Data</DialogTitle>
+            <DialogTitle>User Data</DialogTitle>
             <DialogDescription>
               Enter JSON for your user document. This will update or create the document in Firestore.
             </DialogDescription>
@@ -422,7 +422,7 @@ export default function HomePage() {
               <div className="text-sm text-destructive">{jsonError}</div>
             )}
             <div className="grid gap-1">
-              <Label htmlFor="userJson">User JSON</Label>
+              <Label htmlFor="userJson">User data</Label>
               <Textarea
                 id="userJson"
                 value={userJson}
