@@ -28,28 +28,35 @@ In the Service accounts list choose sheets-access
 The contents of the json file is stored in the secrets manager
 
 ```
-cat sheets-access-123456-123f58bc2123.json | tr '\n' ' ' | pbcopy
 < sheets-access-123456-123f58bc2123.json tr '\n' ' ' | pbcopy
 firebase functions:secrets:set SHEETS
 <paste the json here>
 ```
 
-Put the contents of the secret into the functions/.secret.local.  Format is SHEETS='<json here>'
-
-```
-firebase functions:secrets:access SHEETS > functions/.secret.local
-vim functions/.secret.local
-<add the SHEETS=' and the trailing '>
- ```
-
- ## Share a google sheet with the service account email
+## Share a google sheet with the service account email
 Create a google sheet in your sheets account.  Share it with the service account email.  The sheet id is in the functions/src/index.ts file. 
 
 ```
 const SPREADSHEET_ID = '1hRzwZC6Sn7g3ZGYgna6503_jGuEfvCm2C5rchi4Vny8'
 ```
 
- ## Debugging function
+## Debugging function
+
+It is possible to run a function locally and debug it using the vscode debugger.
+
+Put the contents of the secret into the functions/.secret.local.  Format is SHEETS='<json here>'
+
+```
+firebase functions:secrets:access SHEETS > functions/.secret.local
+vim functions/.secret.local
+<add the SHEETS='stuff in file and the trailing '>
+ ```
+
+ The final file looks something like:
+ ```
+ cat functions/.secret.local
+ SHEETS='{   "type": "service_account",   "project_id": "projectid",   "private_key_id": "abcdef12",   "private_key": "-----BEGIN PRIVATE KEY-----\nabcdefABCDEF123\nabcdeeee\nw==\n-----END PRIVATE KEY-----\n",   "client_email": "abcdef@projectid.iam.gserviceaccount.com",   "client_id": "12345",   "auth_uri": "https://accounts.google.com/o/oauth2/auth",   "token_uri": "https://oauth2.googleapis.com/token",   "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",   "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/abcde%40projectid.iam.gserviceaccount.com",   "universe_domain": "googleapis.com" } '
+```
 
 Run the emulators with inspect functions.  Check the port
 ```
