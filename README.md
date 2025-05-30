@@ -1,8 +1,34 @@
 # Firebase Studio
 
-This is a NextJS starter in Firebase Studio.
+This is a NextJS starter in Firebase Studio. It was initially created by the gemini AI.
 
 To get started, take a look at src/app/page.tsx.
+
+## Working locally
+
+Working in studio.firebase.google.com is the easiest way to work.  However, it is possible to work locally.
+
+Front end:
+```
+npm install
+npm run dev
+```
+
+See below for running the function.
+
+Deploying local changes.  First enable an environment that is similar to studio (I hope)
+
+```
+firebase experiments:enable webframeworks
+```
+
+Then deploy the function and hosting
+```
+firebase deploy
+```
+
+
+
 
 ## Sheets API Access
 Make a service account in gcloud.  Do not add any permissions it does not need to access resources in the gcloud project. It will produce an email address that can be used in sheets.
