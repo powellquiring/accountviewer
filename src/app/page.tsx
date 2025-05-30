@@ -325,19 +325,6 @@ export default function HomePage() {
             ) : user ? (
               <div className="flex flex-col items-center gap-1">
                 <div className="flex gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" onClick={handleLogout} className="h-auto py-[2px] px-3 text-xs">
-                        Sign Out
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{user.email || user.displayName || 'User'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <Button variant="outline" onClick={() => setIsJsonDialogOpen(true)} className="h-auto py-[2px] px-3 text-xs">
-                    User JSON
-                  </Button>
                   <Button 
                     onClick={fetchMarketPrices} 
                     disabled={isLoadingPrices || !getCombinedSecurities().length}
@@ -352,6 +339,19 @@ export default function HomePage() {
                     ) : (
                       "Update Prices"
                     )}
+                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" onClick={handleLogout} className="h-auto py-[2px] px-3 text-xs">
+                        Sign Out
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{user.email || user.displayName || 'User'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Button variant="outline" onClick={() => setIsJsonDialogOpen(true)} className="h-auto py-[2px] px-3 text-xs">
+                    User JSON
                   </Button>
                   <Button onClick={toggleDataSource} variant="outline" className="h-auto py-[2px] px-3 text-xs">
                     {dataSource === 'firestore' ? 'Mock' : 'Live (Firestore)'} Data
