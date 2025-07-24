@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CheckCircle } from 'lucide-react';
 
 // Moved firebaseConfig outside the component
 const firebaseConfig = {
@@ -58,6 +59,7 @@ export default function HomePage() {
   const [priceError, setPriceError] = useState<string | null>(null);
   const [isLocalhost, setIsLocalhost] = useState<boolean>(false);
   const [isEmulatorActive, setIsEmulatorActive] = useState<boolean>(false);
+  const [priceUpdateSuccess, setPriceUpdateSuccess] = useState<boolean>(false);
   const { toast } = useToast();
       
   // Set isMounted to true when component mounts
@@ -246,6 +248,7 @@ export default function HomePage() {
     
     setIsLoadingPrices(true);
     setPriceError(null);
+    setPriceUpdateSuccess(false);
     
     try {
       const symbols = securities.map(security => security.symbol);
@@ -266,10 +269,9 @@ export default function HomePage() {
       // Save to localStorage
       localStorage.setItem(MARKET_PRICES_STORAGE_KEY, JSON.stringify(prices));
       
-      toast({
-        title: "Prices Updated",
-        description: "Market prices have been refreshed",
-      });
+      setPriceUpdateSuccess(true);
+      setTimeout(() => setPriceUpdateSuccess(false), 5000);
+
     } catch (error: any) {
       console.error("Failed to fetch market prices:", error);
       setPriceError(error.message || "Could not load market prices");
@@ -327,14 +329,19 @@ export default function HomePage() {
                 <div className="flex gap-2">
                   <Button 
                     onClick={fetchMarketPrices} 
-                    disabled={isLoadingPrices || !getCombinedSecurities().length}
+                    disabled={isLoadingPrices || !getCombinedSecurities().length || priceUpdateSuccess}
                     variant="outline"
-                    className="h-auto py-[2px] px-3 text-xs"
+                    className={`h-auto py-[2px] px-3 text-xs transition-all duration-300 ${priceUpdateSuccess ? 'bg-green-500 text-white hover:bg-green-600' : ''}`}
                   >
                     {isLoadingPrices ? (
                       <>
                         <LoadingSpinner size={16} className="mr-2" />
                         Updating...
+                      </>
+                    ) : priceUpdateSuccess ? (
+                      <>
+                        <CheckCircle size={16} className="mr-2" />
+                        Success!
                       </>
                     ) : (
                       "Update Prices"
