@@ -2,7 +2,7 @@
 import type { Account, Security } from '@/types/account';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
@@ -20,11 +20,41 @@ interface AccountCardProps {
   marketPrices?: Record<string, number>;
 }
 
-export function AccountCard({ account, className, style, marketPrices = {} }: AccountCardProps) {
-  const [sortBy, setSortBy] = useState<keyof Security | 'value' | 'totalCost' | 'price' | 'return' | null>(null);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+type SortableColumn = keyof Security | 'value' | 'totalCost' | 'price' | 'return';
 
-  const handleSort = (column: keyof Security | 'value' | 'totalCost' | 'price' | 'return') => {
+export function AccountCard({ account, className, style, marketPrices = {} }: AccountCardProps) {
+  const getInitialSortState = () => {
+    if (typeof window === 'undefined') {
+      return { sortBy: null, sortOrder: 'asc' };
+    }
+    try {
+      const savedSort = localStorage.getItem(`account-card-sort-${account.id}`);
+      if (savedSort) {
+        const { sortBy, sortOrder } = JSON.parse(savedSort);
+        return { sortBy: sortBy as SortableColumn, sortOrder: sortOrder as 'asc' | 'desc' };
+      }
+    } catch (error) {
+      console.error("Failed to parse sort state from localStorage", error);
+    }
+    return { sortBy: null, sortOrder: 'asc' as 'asc' | 'desc' };
+  };
+
+  const [sortBy, setSortBy] = useState<SortableColumn | null>(getInitialSortState().sortBy);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(getInitialSortState().sortOrder);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const sortState = JSON.stringify({ sortBy, sortOrder });
+        localStorage.setItem(`account-card-sort-${account.id}`, sortState);
+      } catch (error) {
+        console.error("Failed to save sort state to localStorage", error);
+      }
+    }
+  }, [sortBy, sortOrder, account.id]);
+
+
+  const handleSort = (column: SortableColumn) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
