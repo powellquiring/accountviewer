@@ -107,6 +107,10 @@ firebase deploy --only functions
 ```
 
 ## tsx
+Etrade: Select Portfolios, Account: All brokerage accounts, click Download button
+Fidelity: Open All Accounts, Positions tab, click elipses - Download
+Robinhood: Copy paste create csv
+
 The tsx directory contains a tool to generate a json file from downloaded accounts csv files. It supports Etrade, Fidelity, and Robinhood .  It is a node app that can be run with tsx.
 
 ```
