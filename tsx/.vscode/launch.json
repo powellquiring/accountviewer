@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Debug with tsx",
+  "type": "node",
+  "request": "launch",
+            "program": "${workspaceFolder}/tool.ts",
+  "runtimeExecutable": "tsx", // This specifies that VS Code should use tsx to run the file
+  "console": "integratedTerminal", // Optional: Open the integrated terminal to see console logs
+  "internalConsoleOptions": "neverOpen", // Don't open the debug console, use the integrated terminal
+  "skipFiles": [
+    "<node_internals>/**", // Exclude Node.js internal modules from the debugger
+    "${workspaceFolder}/node_modules/**" // Optionally, skip files in node_modules
+  ]
+        }
+    ]
+}

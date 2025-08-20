@@ -4,6 +4,16 @@ import path from 'path'
 import { parse } from 'csv-parse/sync'
 import yahooFinance from 'yahoo-finance2';
 
+// Suppress yahoo-finance2 info messages only
+yahooFinance.setGlobalConfig({
+  logger: {
+    info: () => {},
+    debug: () => {},
+    warn: (...args: any[]) => console.error(...args),
+    error: (...args: any[]) => console.error(...args),
+  },
+});
+
 
 dotenv.config()
 
@@ -68,6 +78,87 @@ async function stockDescription(name:string): Promise<string> {
   }
 }
 
+function parseEtradeAllAccounts(content: string): ParseResult {
+  // Parse CSV content
+  const rows = content.split('\n')
+  const error: ParseResult = { accounts: [], success: false }
+
+  if (rows.length < 16) {
+    return error
+  }
+  if (rows[0].trim() != 'Account Summary') {
+    return error
+  }
+
+  // parse the two lines that summarize the account
+  const ACCOUNT_NAME = 'Account'
+  const ACCOUNT_VALUE = 'Total Assets'
+  const GAIN = 'Total Unrealized Gain $'
+  const totalHeading = rows[1]
+  for (const columnHead of [ACCOUNT_NAME, ACCOUNT_VALUE, GAIN]) {
+    if (!totalHeading.includes(columnHead)) {
+      return error
+    }
+  }
+  const accountTable = rows.slice(1, 3).join('\n')
+  const accountRecords = parse(accountTable, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  })
+  const accountValue = accountRecords[0][ACCOUNT_VALUE]
+  const accountName = accountRecords[0][ACCOUNT_NAME]
+
+  const QTY = 'Quantity'
+  const SYMBOL = 'Symbol'
+  const COST = 'Price Paid $'
+
+  const heading = rows[10]
+  for (const columnHead of [SYMBOL, QTY, COST]) {
+    if (!heading.includes(columnHead)) {
+      return error
+    }
+  }
+
+  let row_number_last = 0
+  let accountCash = 0
+  for (let row_number = 11; row_number < rows.length; row_number++) {
+    const row_contents = rows[row_number]
+    row_number_last = row_number
+    if (row_contents.includes('CASH')) {
+      const cashRow = row_contents.split(',')
+      accountCash = Number(cashRow[9])
+      break
+    }
+  }
+
+  const table = rows.slice(10, row_number_last).join('\n')
+  const records = parse(table, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  })
+
+  // Transform records to match securities format
+  const securities = records.map((record: any) => ({
+    symbol: record[SYMBOL],
+    quantity: Number(record[QTY] || 0),
+    cost: Number(record[COST] || 0),
+    stock: record[SYMBOL] !== 'VSGAX',
+  }))
+
+  return {
+    accounts: [
+      {
+        name: accountName,
+        value: accountValue,
+        cash: accountCash,
+        securities: securities,
+      },
+    ],
+    success: true,
+  }
+}
 function parseEtradeContent(content: string): ParseResult {
   // Parse CSV content
   const rows = content.split('\n')
@@ -85,6 +176,13 @@ function parseEtradeContent(content: string): ParseResult {
   const ACCOUNT_VALUE = 'Net Account Value'
   const CASH = 'Cash Purchasing Power'
   const totalHeading = rows[1]
+  if (totalHeading.includes(ACCOUNT_NAME)) {
+    const accountDescription = rows[2]
+    if (accountDescription.includes("All brokerage accounts")) {
+      return parseEtradeAllAccounts(content)
+    }
+    return error
+  }
   for (const columnHead of [ACCOUNT_NAME, ACCOUNT_VALUE, CASH]) {
     if (!totalHeading.includes(columnHead)) {
       return error
@@ -222,6 +320,8 @@ function parseFidelityContent(content: string): ParseResult {
     for (const record of records) {
       if (record[SYMBOL] === SPAXX || record[SYMBOL] === CORE) {
         cash = Number(record['Current Value'].substring(1) || 0)
+      } else if (record[SYMBOL] === 'Pending Activity') {
+        // skip
       } else {
         securities.push({
           symbol: record[SYMBOL],
