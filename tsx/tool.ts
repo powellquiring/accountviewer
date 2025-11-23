@@ -7,8 +7,8 @@ import yahooFinance from 'yahoo-finance2';
 // Suppress yahoo-finance2 info messages only
 yahooFinance.setGlobalConfig({
   logger: {
-    info: () => {},
-    debug: () => {},
+    info: () => { },
+    debug: () => { },
     warn: (...args: any[]) => console.error(...args),
     error: (...args: any[]) => console.error(...args),
   },
@@ -65,7 +65,7 @@ function getSecuritiesBaseDir(): string {
   return process.env.SECURITIES_BASE_DIR || '/Users/powellquiring/track'
 }
 
-async function stockDescription(name:string): Promise<string> {
+async function stockDescription(name: string): Promise<string> {
   if (name === 'BRK.B') {
     name = 'BRK-B'
   }
@@ -309,18 +309,18 @@ function parseFidelityContent(content: string): ParseResult {
     accountGroups[accountName].push(record)
   })
 
+  const CASH_SYMBOLS = new Set(['SPAXX**', 'CORE**', 'SGOV', 'SPAXX'])
   const ret: Account[] = []
   Object.entries(accountGroups).forEach(([accountName, records]) => {
     const name = accountName
     const value = 0
     let cash = 0
     const securities: Security[] = []
-    const SPAXX = 'SPAXX**'
-    const CORE = 'CORE**'
     for (const record of records) {
-      if (record[SYMBOL] === SPAXX || record[SYMBOL] === CORE) {
-        cash = Number(record['Current Value'].substring(1) || 0)
-      } else if (record[SYMBOL] === 'Pending Activity') {
+      if (CASH_SYMBOLS.has(record[SYMBOL])) {
+        let cashLine = Number(record['Current Value'].substring(1) || 0)
+        cash = cash + cashLine
+      } else if (record[SYMBOL].toLowerCase() === 'pending activity') {
         // skip
       } else {
         securities.push({
@@ -506,7 +506,7 @@ interface PrintAccount {
 interface Print {
   accounts: PrintAccount[]
 }
-const ret: Print = {accounts: []}
+const ret: Print = { accounts: [] }
 // const securitiesLists = await getSecuritiesLists()
 //const lists = securitiesLists.lists
 const lists = ["watchlist"]
@@ -516,7 +516,7 @@ for (let i = 0; i < lists.length; i++) {
   for (const account of securities.securities) {
     const printSecurities: PrintSecurity[] = []
     for (const security of account.securities) {
-      const description:string = await stockDescription(security.symbol)
+      const description: string = await stockDescription(security.symbol)
       printSecurities.push({
         description: description,
         quantity: security.quantity,
