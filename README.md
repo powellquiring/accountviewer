@@ -116,4 +116,7 @@ The tsx directory contains a tool to generate a json file from downloaded accoun
 ```
 cd tsx
 npx tsx tool.ts
+
+# to debug
+code .
 ```
